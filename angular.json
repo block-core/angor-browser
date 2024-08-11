@@ -5,17 +5,7 @@
   "projects": {
     "angor-browse": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "standalone": false
-        },
-        "@schematics/angular:directive": {
-          "standalone": false
-        },
-        "@schematics/angular:pipe": {
-          "standalone": false
-        }
-      },
+      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -26,20 +16,13 @@
             "outputPath": "dist",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
-              },
-              {
-                "glob": "favicon.ico",
-                "input": "src",
-                "output": "/"
               }
             ],
             "styles": [
@@ -47,25 +30,20 @@
               "src/styles.css",
               "src/assets/styles/theme.css"
             ],
-            "scripts": [],
-            "server": "src/main.server.ts",
-            "prerender": true,
-            "ssr": {
-              "entry": "server.ts"
-            }
+            "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "8kB",
-                  "maximumError": "16kB"
+                  "maximumWarning": "2kB",
+                  "maximumError": "4kB"
                 }
               ],
               "outputHashing": "all"
@@ -79,7 +57,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "angor-browse:build:production"
@@ -96,28 +74,19 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "src/assets",
-                "output": "/assets"
-              },
-              {
-                "glob": "favicon.ico",
-                "input": "src",
-                "output": "/"
+                "input": "public"
               }
             ],
             "styles": [
               "@angular/material/prebuilt-themes/azure-blue.css",
-              "src/styles.css",
-              "src/assets/styles/theme.css"
-            ],
+            "src/styles.css",
+            "src/assets/styles/theme.css"
+],
             "scripts": []
           }
         },
@@ -136,6 +105,6 @@
     }
   },
   "cli": {
-    "analytics": "f7830973-a665-4535-80b6-45c72f08fc6e"
+    "analytics": false
   }
 }
