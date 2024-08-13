@@ -35,12 +35,52 @@
           <div class="meta-info">Angor Indexers</div>
         </div>
       </header>
-      <div class="e-content section-entry" itemprop="sectionBody">
-        <p>Description</p>
+
+      <div class="network-section">
+        <h2>Mainnet</h2>
+        <div class="add-indexer-section">
+          <input [(ngModel)]="newIndexerUrlMainnet" placeholder="New Indexer URL" type="text" class="indexer-input" />
+          <div class="btns">
+            <button class="action-button" (click)="addIndexer('mainnet')">Add Indexer</button>
+          </div>
+        </div>
+
+        <div class="indexer-main-card">
+          <span class="indexer-section-link" *ngFor="let indexer of indexersMainnet">
+            <a id="theme-btn" class="nav-icon" (click)="toggleIndexerStatus('mainnet', indexer)">
+              <span *ngIf="!indexer.primary">Set Primary</span>
+            </a>
+            <span>{{ indexer.url }}</span>
+            <button (click)="removeIndexer('mainnet', indexer)">Remove</button>
+          </span><br>
+        </div>
       </div>
+
+<br><br>
+     <div class="network-section">
+        <h2>Testnet</h2>
+        <div class="add-indexer-section">
+          <input [(ngModel)]="newIndexerUrlTestnet" placeholder="New Indexer URL" type="text" class="indexer-input" />
+          <div class="btns">
+            <button class="action-button" (click)="addIndexer('testnet')">Add Indexer</button>
+          </div>
+        </div>
+
+        <div class="indexer-main-card">
+          <span class="indexer-section-link" *ngFor="let indexer of indexersTestnet">
+            <a id="theme-btn" class="nav-icon" (click)="toggleIndexerStatus('testnet', indexer)">
+              <span *ngIf="!indexer.primary">Set Primary</span>
+            </a>
+            <span>{{ indexer.url }}</span>
+            <button (click)="removeIndexer('testnet', indexer)">Remove</button>
+          </span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
+
 
 <section id="relays" class="h-entry section section-type-page">
   <div class="section-inner">
