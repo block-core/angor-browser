@@ -2,9 +2,12 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProjectsService } from '../../services/projects.service';
 import { StateService } from '../../services/state.service';
+import { NostrService } from '../../services/nostr.service';
 
 interface Project {
   nostrPubKey: string;
+  displayName?: string;
+  picture?: string;
 }
 
 @Component({
@@ -21,7 +24,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   constructor(
     private projectService: ProjectsService,
     private router: Router,
-    private stateService: StateService
+    private stateService: StateService,
+    private nostrService: NostrService
   ) {}
 
   ngOnInit(): void {
@@ -41,14 +45,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
 
-    this.projectService.fetchProjects().then((projects: any[]) => {
+    this.projectService.fetchProjects().then(async (projects: Project[]) => {
       if (projects.length === 0 && this.projects.length === 0) {
         this.errorMessage = 'No projects found';
       } else if (projects.length === 0) {
         this.errorMessage = 'No more projects found';
       } else {
         this.projects = [...this.projects, ...projects];
+
+        for (let project of projects) {
+        await this.loadMetadataForProject( project);
+        }
         this.stateService.setProjects(this.projects);
+
       }
       this.loading = false;
       window.scrollTo(0, scrollTop); // Restore scroll position
@@ -58,6 +67,17 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.loading = false;
       window.scrollTo(0, scrollTop); // Restore scroll position on error
     });
+  }
+
+  async loadMetadataForProject(project: Project): Promise<void> {
+    try {
+      const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+      project.displayName = metadata.name;
+      project.picture = metadata.picture;
+    } catch (error) {
+      console.error(`Error fetching metadata for project ${project.nostrPubKey}:`, error);
+      // Skip the project if there's an error fetching its metadata
+    }
   }
 
   @HostListener('window:scroll', [])
