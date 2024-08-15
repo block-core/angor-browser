@@ -29,8 +29,7 @@ export class ProjectDetailsComponent implements OnInit {
   async fetchProjectMetadata(nostrPubKey: string): Promise<void> {
     this.isLoading = true; // Set loading state to true
     try {
-      await this.nostrService.ensureRelaysConnected(); // Ensure relays are connected before fetching metadata
-      this.isRelayConnected = true; // Relay connection successful
+       this.isRelayConnected = true; // Relay connection successful
       const metadata = await this.nostrService.fetchMetadata(nostrPubKey);
       if (metadata) {
         this.selectedProject = metadata;

@@ -33,10 +33,7 @@ export class MessageService {
   }
 
   async getUnreadMessagesCount(): Promise<void> {
-    const notifications = await this.nostrService.getNotifications();
-    const unreadCount = notifications.filter(notification => !notification.read).length;
-    this.unreadMessagesCount.next(unreadCount);
-  }
+   }
 
   getChatUsers() {
     return this.chatUsers.asObservable();

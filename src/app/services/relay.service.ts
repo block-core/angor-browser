@@ -7,7 +7,7 @@ import WebSocket from '@blockcore/ws';
 })
 export class RelayService {
   private pool: SimplePool;
-  public relays: { url: string, connected: boolean }[];
+  public relays: { url: string, connected: boolean }[] = [];
   private isConnected: boolean = false;
   private retryInterval: number = 5000; // 5 seconds
 
@@ -28,14 +28,14 @@ export class RelayService {
     return defaultRelays;
   }
 
-  public saveRelaysToLocalStorage() {
+  public saveRelaysToLocalStorage(): void {
     if (typeof localStorage !== 'undefined') {
       const customRelays = this.relays.filter(relay => !['wss://relay.angor.io', 'wss://relay2.angor.io'].includes(relay.url));
       localStorage.setItem('nostrRelays', JSON.stringify(customRelays));
     }
   }
 
-  private async connectToRelay(relay: { url: string; connected: boolean }): Promise<void> {
+  private async connectToRelay(relay: { url: string, connected: boolean }): Promise<void> {
     try {
       const ws = new WebSocket(relay.url);
       ws.onopen = () => {
@@ -46,25 +46,26 @@ export class RelayService {
       ws.onerror = (error) => {
         relay.connected = false;
         console.error(`Failed to connect to relay: ${relay.url}`, error);
-        this.saveRelaysToLocalStorage();
+        this.retryConnection(relay);
       };
       ws.onclose = () => {
         relay.connected = false;
         console.log(`Disconnected from relay: ${relay.url}`);
-        setTimeout(() => this.connectToRelay(relay), this.retryInterval); // Retry connection after interval
-        this.saveRelaysToLocalStorage();
+        this.retryConnection(relay);
       };
     } catch (error) {
       relay.connected = false;
-      console.error(`Failed to connect to relay: ${relay.url}`, error);
-      setTimeout(() => this.connectToRelay(relay), this.retryInterval); // Retry connection after interval
-      this.saveRelaysToLocalStorage();
+      console.error(`Error in connecting to relay: ${relay.url}`, error);
+      this.retryConnection(relay);
     }
+  }
+
+  private retryConnection(relay: { url: string, connected: boolean }): void {
+    setTimeout(() => this.connectToRelay(relay), this.retryInterval);
   }
 
   public async connectToRelays(): Promise<void> {
     if (this.isConnected) return;
-
     const connections = this.relays.map(relay => this.connectToRelay(relay));
     await Promise.all(connections);
     this.isConnected = true;
@@ -79,10 +80,15 @@ export class RelayService {
   }
 
   public addRelay(url: string): void {
-    if (!this.relays.some((relay) => relay.url === url)) {
-      this.relays.push({ url, connected: false });
-      this.connectToRelay({ url, connected: false }); // Attempt to connect to the new relay
+    if (!this.isRelayPresent(url)) {
+      const newRelay = { url, connected: false };
+      this.relays.push(newRelay);
+      this.connectToRelay(newRelay);
     }
+  }
+
+  public isRelayPresent(url: string): boolean {
+    return this.relays.some(relay => relay.url === url);
   }
 
   public async ensureConnectedRelays(): Promise<void> {

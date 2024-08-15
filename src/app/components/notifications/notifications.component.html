@@ -1,23 +1,10 @@
 <section id="page-notifications" class="h-entry section section-type-page">
     <div class="section-inner">
       <div class="section-main">
-  
-        <div class="notifications">
-          <h2>Notifications ({{ unreadCount$ | async }} unread)</h2>
-          <ul>
-            <li *ngFor="let notification of notifications$ | async">
-              <div class="notification-content">
-                <p>{{ notification.content }}</p>
-                <small>{{ notification.created_at | date:'short' }}</small>
-              </div>
-              <div class="notification-actions">
-                <button *ngIf="!notification.read" (click)="markAsRead(notification)">Mark as Read</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-        
-                  
+
+ 
+
+
       </div>
     </div>
   </section>

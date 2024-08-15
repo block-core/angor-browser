@@ -4,6 +4,7 @@ import { NostrService } from '../../services/nostr.service';
 import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { User } from '../../../models/user.model';
+import { RelayService } from '../../services/relay.service';
 
 @Component({
   selector: 'app-nostr',
@@ -31,7 +32,7 @@ export class ProfileComponent implements OnInit {
   publishedEventContent: string = '';
   metadata: any = null;
 
-  constructor(public nostrService: NostrService) {}
+  constructor(public nostrService: NostrService,public relayService: RelayService) {}
 
   ngOnInit() {
     this.loadNostrPublicKeyFromLocalStorage();
@@ -60,7 +61,7 @@ export class ProfileComponent implements OnInit {
           this.nostrService.addRelay(relayUrl);
         });
       }
-      this.relays = this.nostrService.relayService.relays;
+      this.relays = this.relayService.relays;
 
       this.isAuthenticated = true;
       this.accountType = 'extension';
@@ -135,7 +136,7 @@ export class ProfileComponent implements OnInit {
           this.nostrService.addRelay(relayUrl);
         });
       }
-      this.relays = this.nostrService.relayService.relays;
+      this.relays = this.relayService.relays;
     } catch (error) {
       console.error('Failed to fetch public relays from extension:', error);
     }
@@ -169,10 +170,10 @@ export class ProfileComponent implements OnInit {
 
   async connectRelays() {
     try {
-      await this.nostrService.relayService.connectToRelays();
-      this.connectionStatus = `Connected to relays: ${this.nostrService.relayService.relays.map(r => r.url).join(', ')}`;
+      await this.relayService.connectToRelays();
+      this.connectionStatus = `Connected to relays: ${this.relayService.relays.map(r => r.url).join(', ')}`;
       this.connectButtonText = 'Connected';
-      this.relays = this.nostrService.relayService.relays;
+      this.relays = this.relayService.relays;
       this.subscribeToEvents();
     } catch (error) {
       this.connectionStatus = `Failed to connect to relays`;

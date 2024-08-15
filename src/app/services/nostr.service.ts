@@ -8,9 +8,7 @@ import {
 } from 'nostr-tools/pure'; // Ensure correct path
 import { bytesToHex } from '@noble/hashes/utils';
 import { RelayService } from './relay.service';
-import { NotificationService } from './notification.service';
 import { User } from '../../models/user.model';
-import { Notification } from '../../models/notification.model';
 import { Filter } from 'nostr-tools';
 
 @Injectable({
@@ -19,15 +17,12 @@ import { Filter } from 'nostr-tools';
 export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
-  public relayService: RelayService;
 
   constructor(
-    relayService: RelayService,
-    private notificationService: NotificationService
+    private relayService: RelayService,
   ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
-    this.relayService = relayService;
   }
 
   generateNewAccount(): { publicKey: string; secretKeyHex: string } {
@@ -54,7 +49,7 @@ export class NostrService {
     return this.publicKey;
   }
 
-  createEvent(content: string): any {
+  createEvent(content: string): NostrEvent {
     const eventTemplate = {
       kind: 1,
       created_at: Math.floor(Date.now() / 1000),
@@ -64,32 +59,27 @@ export class NostrService {
     return finalizeEvent(eventTemplate, this.secretKey);
   }
 
-  verifyEvent(event: any): boolean {
+  verifyEvent(event: NostrEvent): boolean {
     return verifyEvent(event);
   }
 
-  async ensureRelaysConnected(): Promise<void> {
+  private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();
   }
 
   async fetchMetadata(pubkey: string): Promise<any> {
-    await this.ensureRelaysConnected(); // Ensure relays are connected before fetching metadata
+    await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     return new Promise((resolve, reject) => {
       const sub = pool.subscribeMany(
         connectedRelays,
-        [
-          {
-            authors: [pubkey],
-            kinds: [0],
-          },
-        ],
+        [{ authors: [pubkey], kinds: [0] }],
         {
           onevent(event: NostrEvent) {
             if (event.pubkey === pubkey && event.kind === 0) {
@@ -99,8 +89,9 @@ export class NostrService {
               } catch (error) {
                 console.error('Error parsing event content:', error);
                 resolve(null);
+              } finally {
+                sub.close();
               }
-              sub.close();
             }
           },
           oneose() {
@@ -112,10 +103,11 @@ export class NostrService {
     });
   }
 
-  async publishEventToRelays(event: any): Promise<any> {
+  async publishEventToRelays(event: NostrEvent): Promise<NostrEvent> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
+
     try {
       await Promise.any(pool.publish(connectedRelays, event));
       console.log('Event published:', event);
@@ -132,13 +124,9 @@ export class NostrService {
       const connectedRelays = this.relayService.getConnectedRelays();
       pool.subscribeMany(
         connectedRelays,
-        [
-          {
-            kinds: [1],
-          },
-        ],
+        [{ kinds: [1] }],
         {
-          onevent: (event: NostrEvent) => {
+          onevent(event: NostrEvent) {
             callback(event);
           },
         }
@@ -147,23 +135,19 @@ export class NostrService {
   }
 
   async getUsers(): Promise<User[]> {
-    await this.ensureRelaysConnected(); // Ensure relays are connected before fetching users
+    await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const users: User[] = [];
       const sub = pool.subscribeMany(
         connectedRelays,
-        [
-          {
-            kinds: [0],
-          },
-        ],
+        [{ kinds: [0] }],
         {
           onevent(event: NostrEvent) {
             try {
@@ -190,23 +174,18 @@ export class NostrService {
   }
 
   async getMetadata(pubkey: string): Promise<any> {
-    await this.ensureRelaysConnected(); // Ensure relays are connected before fetching metadata
+    await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     return new Promise((resolve, reject) => {
       const sub = pool.subscribeMany(
         connectedRelays,
-        [
-          {
-            authors: [pubkey],
-            kinds: [0],
-          },
-        ],
+        [{ authors: [pubkey], kinds: [0] }],
         {
           onevent(event: NostrEvent) {
             if (event.pubkey === pubkey && event.kind === 0) {
@@ -235,7 +214,7 @@ export class NostrService {
       const pool = this.relayService.getPool();
       const connectedRelays = this.relayService.getConnectedRelays();
       pool.subscribeMany(connectedRelays, [{ kinds: [1] }], {
-        onevent: (event: NostrEvent) => {
+        onevent(event: NostrEvent) {
           try {
             const content = JSON.parse(event.content);
             const user: User = {
@@ -253,75 +232,28 @@ export class NostrService {
     });
   }
 
-  addRelay(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.relayService.addRelay(url);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async getNotifications(): Promise<Notification[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+  addRelay(url: string): void {
+    if (!this.relayService.isRelayPresent(url)) {
+      this.relayService.addRelay(url);
     }
-    console.log(this.publicKey);
-
-    const filters: Filter[] = [{ kinds: [3], '#p': [this.publicKey] }];
-
-    const notifications: NostrEvent[] = [];
-
-    return new Promise((resolve, reject) => {
-      const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent: (event: NostrEvent) => {
-          notifications.push(event);
-        },
-        oneose: () => {
-          sub.close();
-          const notificationList: Notification[] = notifications.map(
-            (event: NostrEvent) => ({
-              id: event.id,
-              kind: event.kind,
-              pubkey: event.pubkey,
-              created_at: event.created_at,
-              content: event.content,
-              read: false,
-              tags: event.tags,
-            })
-          );
-
-          notificationList.forEach((notification) => {
-            this.notificationService.addNotification(notification);
-          });
-
-          resolve(notificationList);
-        },
-      });
-    });
   }
+
+
   async getEventsByAuthor(pubkey: string): Promise<NostrEvent[]> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     const filters: Filter[] = [{ authors: [pubkey] }];
 
-    const events: NostrEvent[] = [];
-
     return new Promise((resolve, reject) => {
+      const events: NostrEvent[] = [];
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent: (event: NostrEvent) => {
+        onevent(event: NostrEvent) {
           events.push(event);
         },
         oneose() {
@@ -338,7 +270,7 @@ export class NostrService {
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     const filters: Filter[] = [{ kinds: [3], '#p': [pubkey] }];
@@ -346,10 +278,9 @@ export class NostrService {
 
     return new Promise((resolve, reject) => {
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent: (event: NostrEvent) => {
+        onevent(event: NostrEvent) {
           try {
-            const pubkey = event.pubkey;
-            followers.push({ nostrPubKey: pubkey } as User);
+            followers.push({ nostrPubKey: event.pubkey } as User);
           } catch (error) {
             console.error('Error parsing follower event:', error);
           }
@@ -361,13 +292,14 @@ export class NostrService {
       });
     });
   }
+
   async getKind4MessagesToMe(): Promise<NostrEvent[]> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     const filter1: Filter = {
@@ -376,11 +308,10 @@ export class NostrService {
       limit: 50,
     };
 
-    const events: NostrEvent[] = [];
-
     return new Promise((resolve, reject) => {
+      const events: NostrEvent[] = [];
       const sub = pool.subscribeMany(connectedRelays, [filter1], {
-        onevent: (event: NostrEvent) => {
+        onevent(event: NostrEvent) {
           events.push(event);
         },
         oneose() {
@@ -390,13 +321,14 @@ export class NostrService {
       });
     });
   }
+
   async getFollowing(pubkey: string): Promise<User[]> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-      return Promise.reject(new Error('No connected relays'));
+      throw new Error('No connected relays');
     }
 
     const filters: Filter[] = [{ kinds: [3], authors: [pubkey] }];
@@ -404,12 +336,11 @@ export class NostrService {
 
     return new Promise((resolve, reject) => {
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent: (event: NostrEvent) => {
+        onevent(event: NostrEvent) {
           try {
             const tags = event.tags.filter((tag) => tag[0] === 'p');
             tags.forEach((tag) => {
-              const pubkey = tag[1];
-              following.push({ nostrPubKey: pubkey } as User);
+              following.push({ nostrPubKey: tag[1] } as User);
             });
           } catch (error) {
             console.error('Error parsing following event:', error);

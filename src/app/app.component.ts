@@ -1,7 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, HostListener, Inject, PLATFORM_ID, ViewChild, OnInit } from '@angular/core';
 
-import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +22,7 @@ export class AppComponent implements OnInit {
 
 
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object,private notificationService: NotificationService) { }
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
 
 
@@ -35,10 +34,7 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.setInitialTheme();
-      this.loadSettings();
-       this.notificationService.getUnreadCount().subscribe(count => {
-        this.unreadCount = count;
-      });
+      
     }
   }
 

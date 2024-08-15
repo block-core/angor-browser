@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NostrService } from '../../services/nostr.service';
 import { IndexerService } from '../../services/indexer.service';
+import { RelayService } from '../../services/relay.service';
 
 @Component({
   selector: 'app-settings',
@@ -22,7 +23,7 @@ export class SettingsComponent implements OnInit {
   indexersMainnet: Array<{ url: string, primary: boolean }> = [];
   indexersTestnet: Array<{ url: string, primary: boolean }> = [];
 
-  constructor(private nostrService: NostrService, public dialog: MatDialog ,private indexerService: IndexerService) {}
+  constructor(private nostrService: NostrService, private relayService: RelayService,public dialog: MatDialog ,private indexerService: IndexerService) {}
 
   ngOnInit(): void {
     this.loadRelays();
@@ -73,7 +74,7 @@ export class SettingsComponent implements OnInit {
 
 
   loadRelays() {
-    this.relays = this.nostrService.relayService.relays;
+    this.relays = this.relayService.relays;
   }
 
   openAddRelayModal() {
@@ -90,13 +91,13 @@ export class SettingsComponent implements OnInit {
 
   toggleRelayStatus(relay: any) {
     relay.connected = !relay.connected;
-    this.nostrService.relayService.saveRelaysToLocalStorage();
+    this.relayService.saveRelaysToLocalStorage();
   }
 
   async connectRelays() {
     try {
-      await this.nostrService.relayService.connectToRelays();
-      this.connectionStatus = `Connected to relays: ${this.nostrService.relayService.relays.map(r => r.url).join(', ')}`;
+      await this.relayService.connectToRelays();
+      this.connectionStatus = `Connected to relays: ${this.relayService.relays.map(r => r.url).join(', ')}`;
       this.connectButtonText = 'Connected';
     } catch (error) {
       this.connectionStatus = 'Failed to connect to relays';
