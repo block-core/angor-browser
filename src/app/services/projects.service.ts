@@ -13,18 +13,18 @@ export class ProjectsService {
   private limit: number = 50;
   private loading: boolean = false;
   private projects: any[] = [];
+  private noMoreProjects: boolean = false; // Flag to track if more projects are available
 
   constructor(
     private http: HttpClient,
     private indexerService: IndexerService,
-    private nostrService: NostrService
   ) {}
 
   /**
-   * Fetches projects from the server with pagination and retrieves metadata.
+   * Fetches projects from the server with pagination.
    */
   fetchProjects(): Promise<any[]> {
-    if (this.loading) return Promise.resolve([]);
+    if (this.loading || this.noMoreProjects) return Promise.resolve([]);
 
     this.loading = true;
     const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
@@ -33,7 +33,6 @@ export class ProjectsService {
       this.loading = false;
       return Promise.resolve([]);
     }
-
 
     const url = `${indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.limit}`;
     console.log(url);
@@ -44,29 +43,17 @@ export class ProjectsService {
         this.loading = false;
         return of([]); // Return an empty array in case of an error
       })
-    ).toPromise().then(async (projects = []) => {
-      const projectPromises = projects.map(async (project: any) => {
-        return {
-          nostrPubKey: project.nostrPubKey
-        };
-      });
-
-      const processedProjects = await Promise.all(projectPromises);
-
-      this.projects = [...this.projects, ...processedProjects];
-      console.log(this.projects );
-
-      this.offset += this.limit;
+    ).toPromise().then(projects => {
+      projects = projects || []; // Ensure `projects` is always an array
+      if (projects.length === 0) {
+        this.noMoreProjects = true;
+      } else {
+        this.projects = [...this.projects, ...projects];
+        this.offset += this.limit;
+      }
       this.loading = false;
-      return processedProjects;
+      return projects;
     });
-  }
-
-  /**
-   * Triggered when the user scrolls to the bottom of the page.
-   */
-  onScroll(): void {
-    this.fetchProjects();
   }
 
   /**
@@ -75,5 +62,14 @@ export class ProjectsService {
    */
   getProjects(): any[] {
     return this.projects;
+  }
+
+  /**
+   * Resets the project list, typically used when reloading or refreshing.
+   */
+  resetProjects(): void {
+    this.projects = [];
+    this.offset = 0;
+    this.noMoreProjects = false;
   }
 }
