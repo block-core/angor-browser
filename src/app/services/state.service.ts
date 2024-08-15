@@ -1,31 +1,30 @@
 import { Injectable } from '@angular/core';
-import { User } from '../../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StateService {
-  private users: User[] = [];
+  private projects: any[] = [];
 
-  setUsers(users: User[]): void {
-    this.users = users;
+  setProjects(projects: any[]): void {
+    this.projects = projects;
   }
 
-  getUsers(): User[] {
-    return this.users;
+  getProjects(): any[] {
+    return this.projects;
   }
 
-  hasUsers(): boolean {
-    return this.users.length > 0;
+  hasProjects(): boolean {
+    return this.projects.length > 0;
   }
 
-  updateUserActivity(user: User): void {
-    const index = this.users.findIndex(u => u.nostrPubKey === user.nostrPubKey);
+  updateProjectActivity(project: any): void {
+    const index = this.projects.findIndex(p => p.nostrPubKey === project.nostrPubKey);
     if (index > -1) {
-      this.users[index] = user;
+      this.projects[index] = project;
     } else {
-      this.users.push(user);
+      this.projects.push(project);
     }
-    this.users.sort((a, b) => b.lastActivity - a.lastActivity);
+    this.projects.sort((a, b) => b.lastActivity - a.lastActivity);
   }
 }

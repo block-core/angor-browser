@@ -189,6 +189,47 @@ export class NostrService {
     });
   }
 
+  async getMetadata(pubkey: string): Promise<any> {
+    await this.ensureRelaysConnected(); // Ensure relays are connected before fetching metadata
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      return Promise.reject(new Error('No connected relays'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const sub = pool.subscribeMany(
+        connectedRelays,
+        [
+          {
+            authors: [pubkey],
+            kinds: [0],
+          },
+        ],
+        {
+          onevent(event: NostrEvent) {
+            if (event.pubkey === pubkey && event.kind === 0) {
+              try {
+                const metadata = JSON.parse(event.content);
+                resolve(metadata);
+              } catch (error) {
+                console.error('Error parsing metadata content:', error);
+                reject(null);
+              } finally {
+                sub.close();
+              }
+            }
+          },
+          oneose() {
+            sub.close();
+            resolve(null);
+          },
+        }
+      );
+    });
+  }
+
   subscribeToUserActivities(callback: (user: User) => void): void {
     this.ensureRelaysConnected().then(() => {
       const pool = this.relayService.getPool();

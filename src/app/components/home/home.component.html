@@ -3,13 +3,12 @@
     <div class="section-main">
       <div class="e-content article-entry" itemprop="articleBody">
         <div class="truncate-text">
-          <div *ngIf="loading">Loading users...</div>
+          <div *ngIf="loading">Loading Projects...</div>
           <div *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
-          <div *ngIf="!loading && users.length > 0">
+          <div *ngIf="!loading && projects.length > 0">
             <ul>
-              <li *ngFor="let user of users" (click)="goToProjectDetails(user)">
-                <img width="50" height="50"  [src]="user.picture || 'assets/images/no-image.jpg'" (error)="user.picture='assets/images/no-image.jpg'" alt="{{ user.displayName }}">
-                <span>{{ user.displayName }}</span>
+              <li *ngFor="let user of projects" (click)="goToProjectDetails(user)">
+                 <span>{{ user.nostrPubKey }}</span>
               </li>
             </ul>
           </div>

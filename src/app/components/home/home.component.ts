@@ -1,13 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
+import { ProjectsService } from '../../services/projects.service';
 import { NostrService } from '../../services/nostr.service';
 import { StateService } from '../../services/state.service';
 
-interface User {
+interface Project {
   nostrPubKey: string;
-  displayName: string;
-  picture: string;
-  lastActivity: number;
 }
 
 @Component({
@@ -16,56 +14,99 @@ interface User {
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  users: User[] = [];
+  projects: Project[] = [];
   errorMessage: string = '';
-  loading: boolean = true;
-  private eventSubscription: any;
+  loading: boolean = false;
+  noMoreProjects: boolean = false; // Flag to indicate no more projects
+  private scrollListener!: () => void;
 
-  constructor(private nostrService: NostrService, private router: Router, private stateService: StateService) { }
+  constructor(
+    private projectService: ProjectsService,
+    private nostrService: NostrService,
+    private router: Router,
+    private stateService: StateService
+  ) {}
 
   ngOnInit(): void {
-    if (this.stateService.hasUsers()) {
-      this.users = this.stateService.getUsers();
+    if (this.stateService.hasProjects()) {
+      this.projects = this.stateService.getProjects();
       this.loading = false;
     } else {
-      this.loadUsers();
+      this.loadProjects();
     }
-    this.subscribeToUserActivities();
+
+    this.scrollListener = this.onScroll.bind(this);
+    window.addEventListener('scroll', this.scrollListener);
   }
 
-  loadUsers(): void {
-    this.nostrService.getUsers().then((users: User[]) => {
-      this.users = users;
-      this.stateService.setUsers(users);
-      if (users.length === 0) {
-        this.errorMessage = 'No users found';
-      }
-      this.loading = false;
+  loadProjects(): void {
+    if (this.loading || this.noMoreProjects) return; // Prevent multiple requests and if no more projects
+    this.loading = true;
+
+    // Save the current scroll position
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+    this.projectService.fetchProjects().then((projects: any[]) => {
+      const projectPromises = projects.map(async (project: any) => ({
+        nostrPubKey: project.nostrPubKey
+      }));
+
+      Promise.all(projectPromises).then((loadedProjects: Project[]) => {
+        if (loadedProjects.length === 0) {
+          this.noMoreProjects = true; // No more projects
+          this.errorMessage = 'No more projects found';
+        } else {
+          this.projects = [...this.projects, ...loadedProjects];
+          this.stateService.setProjects(this.projects);
+          this.errorMessage = ''; // Clear any previous error message
+        }
+        this.loading = false;
+
+        // Restore the scroll position after a short delay
+        setTimeout(() => {
+          window.scrollTo(0, scrollTop);
+        }, 100); // Adjust the delay as needed
+      }).catch((error: any) => {
+        console.error('Error processing projects:', error);
+        this.errorMessage = 'Error processing projects. Please try again later.';
+        this.loading = false;
+
+        // Restore the scroll position after a short delay
+        setTimeout(() => {
+          window.scrollTo(0, scrollTop);
+        }, 100); // Adjust the delay as needed
+      });
     }).catch((error: any) => {
-      console.error('Error fetching users:', error);
-      this.errorMessage = 'Error fetching users. Please try again later.';
+      console.error('Error fetching projects:', error);
+      this.errorMessage = 'Error fetching projects. Please try again later.';
       this.loading = false;
+
+      // Restore the scroll position after a short delay
+      setTimeout(() => {
+        window.scrollTo(0, scrollTop);
+      }, 100); // Adjust the delay as needed
     });
   }
 
-  subscribeToUserActivities(): void {
-    this.eventSubscription = this.nostrService.subscribeToUserActivities((event: any) => {
-      const userIndex = this.users.findIndex(user => user.nostrPubKey === event.pubkey);
-      if (userIndex !== -1) {
-        this.users[userIndex].lastActivity = event.created_at;
-        this.users = this.users.sort((a, b) => b.lastActivity - a.lastActivity);
-        this.stateService.updateUserActivity(this.users[userIndex]);
-      }
-    });
+  @HostListener('window:scroll', [])
+  onScroll(): void {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = document.documentElement.clientHeight;
+
+    // Trigger loading projects when near the bottom
+    if (scrollTop + clientHeight >= scrollHeight - 10 && !this.loading && !this.noMoreProjects) {
+      this.loadProjects();
+    }
   }
 
-  goToProjectDetails(user: User): void {
-    this.router.navigate(['/projects', user.nostrPubKey]);
+  goToProjectDetails(project: Project): void {
+    this.router.navigate(['/projects', project.nostrPubKey]);
   }
 
   ngOnDestroy(): void {
-    if (this.eventSubscription) {
-      this.eventSubscription.unsubscribe();
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener);
     }
   }
 }
