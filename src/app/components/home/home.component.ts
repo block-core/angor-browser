@@ -20,7 +20,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   errorMessage: string = '';
   loading: boolean = false;
   private scrollListener!: () => void;
-
+  private metadataLoadLimit = 5;
   constructor(
     private projectService: ProjectsService,
     private router: Router,
@@ -53,8 +53,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       } else {
         this.projects = [...this.projects, ...projects];
 
-        for (let project of projects) {
-        await this.loadMetadataForProject( project);
+        for (let i = 0; i < projects.length; i += this.metadataLoadLimit) {
+          const batch = projects.slice(i, i + this.metadataLoadLimit);
+          await Promise.all(batch.map(project => this.loadMetadataForProject(project)));
         }
         this.stateService.setProjects(this.projects);
 
@@ -71,15 +72,23 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   async loadMetadataForProject(project: Project): Promise<void> {
     try {
-      const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
-      project.displayName = metadata.name;
-      project.picture = metadata.picture;
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(async () => {
+          const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+          this.updateProjectMetadata(project, metadata);
+        });
+      } else {
+        const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+        this.updateProjectMetadata(project, metadata);
+      }
     } catch (error) {
       console.error(`Error fetching metadata for project ${project.nostrPubKey}:`, error);
-      // Skip the project if there's an error fetching its metadata
     }
   }
-
+  updateProjectMetadata(project: Project, metadata: any): void {
+    project.displayName = metadata.name;
+    project.picture = metadata.picture;
+  }
   @HostListener('window:scroll', [])
   onScroll(): void {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
