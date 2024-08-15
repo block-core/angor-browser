@@ -1,44 +1,224 @@
-.add-relay-section{
-  margin: 30px;
+
+
+*{
+  color: var(--neut-L75);
 }
-.btns{
+.section-inner {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--card-shadow);
+}
+
+.section-header .main-title-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.main-title-dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.meta-info-bar .meta-info {
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+}
+
+.network-section {
+  margin-top: 20px;
+}
+
+.network-section h2 {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  margin-bottom: 10px;
+}
+
+.add-indexer-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.indexer-input {
+  flex-grow: 1;
+  padding: 8px 12px;
+  background-color: var(--input-background);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  margin-right: 10px;
+}
+
+.action-button {
+  padding: 8px 16px;
+  background-color: var(--button-background);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: darken(var(--button-background), 10%);
+}
+
+.indexer-main-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.indexer-section-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: var(--card-background);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px var(--card-shadow);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.indexer-section-link:hover {
+  background-color: var(--hover-background);
+  box-shadow: 0 4px 8px var(--hover-shadow);
+}
+
+.indexer-section-link .nav-icon {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.line {
+  width: 2px;
+  height: 100%;
+  background-color: var(--primary-color);
+  margin: 0 10px;
+}
+
+.title {
+  flex-grow: 1;
+}
+
+.title-inner {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+
+
+
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
- /* Add styles for the context menu */
-.context-menu {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
+
+.section-header .section-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: var(--neut-L75);
+}
+
+.network-section h2 {
+  font-size: 1.5rem;
+  color: var(--neut-L75);
+  margin-bottom: 10px;
+}
+
+.add-indexer-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.indexer-input {
+  flex-grow: 1;
   padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-field);
+  color: var(--neut-L75);
+  margin-right: 10px;
 }
 
-.context-menu.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.context-menu button {
-  display: block;
-  width: 100%;
-  padding: 8px 16px;
+.action-button {
+  padding: 10px 20px;
+  background: var(--primary-color);
+  color: var(--button-text);
   border: none;
-  background: none;
-  text-align: left;
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 4px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14px;
-  color: #333;
+  transition: background 0.3s ease;
 }
 
-.context-menu button:hover {
-  background: #f0f0f0;
+.action-button:hover {
+  background: var(--primary-color-hover);
+}
+
+.indexer-main-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.indexer-section-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background: var(--input-field);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.indexer-section-link:hover {
+  background: var(--input-field-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.indexer-section-link .nav-icon {
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.indexer-section-link .title-inner {
+  flex-grow: 1;
+  font-size: 1rem;
+  color: var(--neut-L75);
+}
+
+.indexer-section-link .indexer-status {
+  font-size: 0.875rem;
+  color: var(--neut-L50);
+}
+
+.remove-button {
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: var(--button-text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.remove-button:hover {
+  background: var(--primary-color-hover);
 }
