@@ -2,25 +2,7 @@
   <div class="section-inner">
     <div class="section-main">
       <div class="e-content article-entry" itemprop="articleBody">
-        <div *ngIf="loading" class="loading-spinner">
-          Loading Projects...
-        </div>
-        <div *ngIf="!loading && errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-        <div *ngIf="!loading && projects.length > 0" class="projects-list">
-          <ul>
-            <li *ngFor="let project of projects" (click)="goToProjectDetails(project)" class="project-item">
-              <div class="project-thumbnail">
-                <img [src]="project.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"  alt="{{ project.displayName || 'Project' }}">
-              </div>
-              <div class="project-details">
-                <h3>{{ project.displayName || 'Unknown Project' }}</h3>
-                <p>{{ project.nostrPubKey }}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
+ 
       </div>
     </div>
   </div>

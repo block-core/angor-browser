@@ -1,39 +1,27 @@
-<section id="page-explorer" class="h-entry section section-type-page">
-    <div class="section-inner">
-      <div class="section-main">
-        <div *ngIf="selectedProject" class="profile-container">
-          <img *ngIf="selectedProject.metadata?.banner" class="profile-banner" [src]="selectedProject.metadata.banner"
-            alt="Banner">
-          <img *ngIf="selectedProject.metadata?.picture" class="profile-picture" [src]="selectedProject.metadata.picture"
-            alt="Profile Picture">
-          <div class="profile-details">
-            <div class="main-title-bar">
-              <div class="main-title-dot"></div>
-              <h1 class="p-name section-title" itemprop="headline name">{{ selectedProject.metadata?.name }}</h1>
-            </div>
-            <div class="e-content section-entry">
-              <p>{{ selectedProject.metadata?.about }}</p>
-            </div>
-            <div class="additional-info">
-              <p *ngIf="selectedProject.metadata?.contact"><strong>Contact:</strong> {{ selectedProject.metadata.contact
-                }}</p>
-              <p *ngIf="selectedProject.metadata?.website"><strong>Website:</strong> <a
-                  [href]="selectedProject.metadata.website" target="_blank">{{ selectedProject.metadata.website }}</a></p>
-            </div>
-          </div>
+<section id="page-home" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <div class="e-content article-entry" itemprop="articleBody">
+        <div *ngIf="loading" class="loading-spinner">
+          Loading Projects...
         </div>
-  
-        <div class="text-box">
-          <input type="text" id="search_project" (input)="searchProjects($event)" placeholder="Search projects">
+        <div *ngIf="!loading && errorMessage" class="error-message">
+          {{ errorMessage }}
         </div>
-        <div id="project_results" class="project-results">
-          <div *ngFor="let project of filteredProjects" (click)="selectProject(project)" class="project-card">
-            <p><strong>Project Identifier:</strong> {{ project.projectIdentifier }}</p>
-          </div>
+        <div *ngIf="!loading && projects.length > 0" class="projects-list">
+          <ul>
+            <li *ngFor="let project of projects" (click)="goToProjectDetails(project)" class="project-item">
+              <div class="project-thumbnail">
+                <img [src]="project.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"  alt="{{ project.displayName || 'Project' }}">
+              </div>
+              <div class="project-details">
+                <h3>{{ project.displayName || 'Unknown Project' }}</h3>
+                <p>{{ project.nostrPubKey }}</p>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-  </section>
-   
-  
-  
+  </div>
+</section>
