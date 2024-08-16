@@ -1,29 +1,17 @@
-
-<section id="page-messages" class="h-entry section section-type-page">
+  <section id="page-messages" class="h-entry section section-type-page">
     <div class="section-inner">
       <div class="section-main">
+        <header class="section-header">
+          <div class="main-title-bar">
+            <div class="main-title-dot"></div>
+            <h1 itemprop="name">
+              <span class="section-title">Messages</span>
+            </h1>
+          </div>
 
-        <div class="messages-container">
-          <div class="user-list">
-            <h3>Chat Users</h3>
-            <ul>
-              <li *ngFor="let user of chatUsers" (click)="onSelectUser(user)">
-                {{ user.displayName }}
-              </li>
-            </ul>
-          </div>
-          <div class="chat-window" *ngIf="selectedUser">
-            <h3>Chat with {{ selectedUser.displayName }}</h3>
-            <ul class="messages-list">
-              <li *ngFor="let message of messages">
-                {{ message.content }}
-              </li>
-            </ul>
-            <div class="message-input">
-              <input [(ngModel)]="newMessageContent" placeholder="Type a message..." />
-              <button (click)="sendMessage()">Send</button>
-            </div>
-          </div>
+        </header>
+        <div class="e-content article-entry" itemprop="articleBody">
+
         </div>
       </div>
     </div>

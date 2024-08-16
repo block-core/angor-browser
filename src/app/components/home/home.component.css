@@ -62,3 +62,24 @@
   font-size: 1.25rem;
   margin: 20px 0;
 }
+.meta-info-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.meta-info {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 768px) {
+  .meta-info {
+    flex: 1 1 calc(50% - 10px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .meta-info {
+    flex: 1 1 calc(25% - 10px);
+  }
+}

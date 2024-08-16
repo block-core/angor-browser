@@ -10,26 +10,11 @@
   box-shadow: 0 4px 8px var(--card-shadow);
 }
 
-.section-header .main-title-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
 
-.main-title-dot {
-  width: 10px;
-  height: 10px;
-  background-color: var(--primary-color);
-  border-radius: 50%;
-  margin-right: 10px;
-}
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
 
-.meta-info-bar .meta-info {
+
+ .meta-info-bar .meta-info {
   color: var(--secondary-color);
   font-size: 0.9rem;
 }
@@ -126,14 +111,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.section-header .section-title {
-  font-size: 1.75rem;
-  font-weight: bold;
-  color: var(--neut-L75);
-}
+
 
 .network-section h2 {
   font-size: 1.5rem;

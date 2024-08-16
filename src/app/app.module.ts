@@ -26,7 +26,11 @@ import { ExploreComponent } from './components/explore/explore.component';
 import { ProjectDetailsComponent } from './components/project-details/project-details.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MouseMoveDirective } from './mouse-move.directive';
- 
+import { ExtensionComponent } from './components/profile/extension/extension.component';
+import { NewComponent } from './components/profile/new/new.component';
+import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
+import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -43,6 +47,10 @@ import { MouseMoveDirective } from './mouse-move.directive';
     ExploreComponent,
     ProjectDetailsComponent,
     MouseMoveDirective,
+    ExtensionComponent,
+    NewComponent,
+    MenemonicComponent,
+    PrivatekeyComponent
   ],
   imports: [
     BrowserModule,
