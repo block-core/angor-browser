@@ -33,6 +33,7 @@ interface Project {
     if (this.projects.length === 0) {
       this.loadProjects();
     } else {
+      
       this.loading = false;
     }
 
