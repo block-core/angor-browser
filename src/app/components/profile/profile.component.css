@@ -1,202 +1,66 @@
-
-.auth-container, .main-container {
-    text-align: center;
+*{
+  color: var(--neut-L75);
 }
 
-h2 {
-    color: var(--btn-text-neutral-text);
-    margin-bottom: 20px;
+.section-main{
+  padding: 0;
 }
-
-p {
-    font-size: 14px;
-    margin-top: 30px ;
-}
-
-.key-box, .account-info {
-    padding: 20px;
-    border-radius: 8px;
-    margin: 15px 0;
-    text-align: left;
-}
-
-.key {
-    font-family: 'Courier New', Courier, monospace;
-    padding: 10px;
-    border-radius: 5px;
-    word-break: break-all;
-
-background: var(--input-field);}
-
-.input-text, .input-textarea {
-    width: 100%;
-    resize: none;
-    outline: none;
-    padding: 10px;
-    font-size: 16px;
-    color: var(--neut-L75);
-    border-radius: 5px;
-    box-sizing: border-box;
-    margin-bottom: 10px;
- }
-
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-ul li {
-  background: var(--input-field-hover);
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-
-
-
-
 .profile-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 20px;
-    margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .profile-banner {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 8px 8px 0 0;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
 }
 
 .profile-picture {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    margin-top: -50px;
-    border: 3px solid white;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-top: -50px;
+  border: 3px solid white;
 }
 
 .profile-details {
-    padding: 20px;
-    width: 100%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 0 0 8px 8px;
-}
-
-.profile-details h1 {
-    margin: 10px 0;
-}
-
-.profile-details p {
-    margin: 5px 0;
-}
-
-.additional-info {
-    margin-top: 20px;
-    text-align: left;
+  padding: 20px;
 }
 
 .additional-info p {
-    margin: 5px 0;
+  margin: 5px 0;
 }
-.event-list {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0;
+
+.loading-container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  width: 100%; /* Full width */
-}
-
-.event-list li {
-  background: var(--input-field-hover);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  color: var(--neut-L75);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 100%; /* Full width */
-  max-width: 500px; /* Ensure it takes full width */
-  margin: 0 auto;
-  word-wrap: break-word; /* Break long words */
-  white-space: pre-wrap; /* Preserve whitespace and wrap text */
-}
-
-.event-list li:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-.event-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  flex-wrap: wrap; /* Allow wrapping for smaller screens */
+  justify-content: center;
+  height: 200px;
+  margin-top: 20px;
 }
 
-.event-title {
-  font-size: 1.5rem; /* Larger title size */
-  font-weight: bold;
-  color: var(--btn-text-neutral-text);
-  flex: 1 1 100%; /* Full width on smaller screens */
-  margin-bottom: 10px;
+.loading-spinner {
+  border: 16px solid #ccc;
+  border-top: 16px solid #333;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 2s linear infinite;
 }
 
-.event-date {
-  font-size: 1rem; /* Larger date size */
-  color: var(--neut-L50);
-  flex: 1 1 100%; /* Full width on smaller screens */
-  text-align: right;
-  margin-bottom: 10px;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.event-content {
-  font-size: 1.25rem; /* Larger content size */
-  line-height: 1.5;
-  color: var(--neut-L75);
-  margin-top: 10px;
-  max-width: 100%; /* Ensure full width for text */
-  word-wrap: break-word; /* Break long words */
-  white-space: pre-wrap; /* Preserve whitespace and wrap text */
-}
-
-.event-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 15px;
-  flex-wrap: wrap; /* Allow wrapping for smaller screens */
-  gap: 10px; /* Space between buttons */
-}
-
-.event-actions button {
-  background-color: #00f5c6;
-  color: #000;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 1rem;
-  min-width: 150px; /* Ensure buttons are larger */
-}
-
-.event-actions button:hover {
-  background-color: #00c6a3;
-}
-
-.event-tag {
-  background-color: #00c6a3;
-  color: #fff;
-  padding: 8px 15px;
-  border-radius: 5px;
-  font-size: 1rem; /* Larger tag size */
-  margin-right: 10px;
-  display: inline-block;
-  margin-bottom: 10px;
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 20px;
 }

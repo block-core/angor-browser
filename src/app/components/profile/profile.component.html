@@ -1,68 +1,58 @@
 <section id="page-profile" class="h-entry section section-type-page">
   <div class="section-inner">
     <div class="section-main">
-      <header class="section-header">
-        <div class="main-title-bar">
-          <div class="main-title-dot"></div>
-          <h1 itemprop="name">
-            <span class="section-title">Profile</span>
-          </h1>
-        </div>
-      </header>
-      <div class="e-content article-entry" itemprop="articleBody">
-        <div class="account-info">
-          <p><strong>Public Key:</strong> <span class="key">{{ publicKey }}</span></p>
-          <div *ngIf="metadata" class="profile-container">
-            <img *ngIf="metadata.banner" class="profile-banner" [src]="metadata.banner" alt="Banner">
-            <img *ngIf="metadata.picture" class="profile-picture" [src]="metadata.picture" alt="Profile Picture">
-            <div class="profile-details">
-              <div class="main-title-bar">
-                <div class="main-title-dot"></div>
-                <h1 class="p-name section-title" itemprop="headline name">{{ metadata.name }}</h1>
-              </div>
-              <div class="e-content section-entry">
-                <p>{{ metadata.about }}</p>
-              </div>
-              <div class="additional-info">
-                <p *ngIf="metadata.contact"><strong>Contact:</strong> {{ metadata.contact }}</p>
-                <p *ngIf="metadata.website"><strong>Website:</strong> <a [href]="metadata.website" target="_blank">{{ metadata.website }}</a></p>
-              </div>
-            </div>
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <div *ngIf="!isLoading && metadata" class="profile-container">
+        <img *ngIf="metadata.banner" class="profile-banner" [src]="metadata.banner" alt="Banner">
+        <img *ngIf="metadata.picture" class="profile-picture" [src]="metadata.picture" alt="Profile Picture">
+
+        <div class="profile-details">
+          <div class="main-title-bar">
+            <h1 class="p-name section-title">{{ metadata.name }}</h1>
+          </div>
+          <div class="e-content section-entry">
+            <p>{{ metadata.about }}</p>
+          </div>
+          <div class="additional-info">
+            <p *ngIf="metadata.display_name"><strong>Display Name:</strong> {{ metadata.display_name }}</p>
+            <p *ngIf="metadata.website"><strong>Website:</strong> <a [href]="metadata.website" target="_blank">{{ metadata.website }}</a></p>
           </div>
         </div>
 
-        <div class="event-section">
-          <textarea [(ngModel)]="eventContent" placeholder="Enter your event content" class="input-textarea"></textarea>
-          <button class="action-button" (click)="signAndPublishEvent()">Sign and Publish Event</button>
-          <p *ngIf="publishedEventContent"><strong>Published Event:</strong> <span class="key">{{ publishedEventContent }}</span></p>
+
+
+
+        <div>
+          <h2>Followers ({{followers.length}})</h2>
+          <!-- <ul *ngIf="followers.length">
+            <li *ngFor="let follower of followers">{{ follower.nostrPubKey }}</li>
+          </ul> -->
         </div>
 
         <div>
-          <h2>Followers {{followers.length}}</h2>
-          <ul class="followers-list">
-            <!-- <li *ngFor="let follower of followers">
-              <span class="key">{{ follower.nostrPubKey }}</span>
-            </li> -->
-          </ul>
+          <h2>Following ({{following.length}})</h2>
+          <!-- <ul *ngIf="following.length">
+            <li *ngFor="let followingUser of following">{{ followingUser.nostrPubKey }}</li>
+          </ul> -->
         </div>
 
         <div>
-          <h2>Following {{following.length}}</h2>
-          <ul class="following-list">
-            <!-- <li *ngFor="let follow of following">
-              <span class="key">{{ follow.nostrPubKey }}</span>
-            </li> -->
-          </ul>
-        </div>
-
-        <div>
-          <h2>Events</h2>
-          <ul class="event-list">
-            <li *ngFor="let event of events" class="event-item">
+          <h2>Events ({{events.length}})</h2>
+          <!-- <ul *ngIf="events.length">
+            <li *ngFor="let event of events">
               <pre>{{ event.content }}</pre>
             </li>
-          </ul>
+          </ul> -->
         </div>
+
+        <!-- <span (click)="editProfile()">Edit Profile</span> -->
+      </div>
+
+      <div *ngIf="!isLoading && errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
       </div>
     </div>
   </div>
