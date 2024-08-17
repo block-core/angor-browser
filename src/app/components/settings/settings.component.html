@@ -212,7 +212,14 @@
           <div class="relay-status">
             {{ relay.connected ? "Connected" : "Disconnected" }}
           </div>
+          <button class="remove-button" (click)="removeRelay(relay.url)">
+            Remove
+          </button>
         </span>
+      </div>
+
+      <div class="remove-all-section">
+        <button class="action-button" (click)="removeAllCustomRelays()">Remove All Custom Relays</button>
       </div>
     </div>
   </div>

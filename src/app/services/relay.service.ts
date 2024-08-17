@@ -104,4 +104,14 @@ export class RelayService {
       checkConnection();
     });
   }
+
+  public removeRelay(url: string): void {
+    this.relays = this.relays.filter(relay => relay.url !== url);
+    this.saveRelaysToLocalStorage();
+  }
+
+  public removeAllCustomRelays(): void {
+    this.relays = this.relays.filter(relay => ['wss://relay.angor.io', 'wss://relay2.angor.io'].includes(relay.url));
+    this.saveRelaysToLocalStorage();
+  }
 }

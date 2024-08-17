@@ -104,4 +104,13 @@ export class SettingsComponent implements OnInit {
       this.connectButtonText = 'Connect to Relays';
     }
   }
+  removeRelay(relayUrl: string): void {
+    this.relayService.removeRelay(relayUrl);
+    this.loadRelays();
+  }
+
+  removeAllCustomRelays(): void {
+    this.relayService.removeAllCustomRelays();
+    this.loadRelays();
+  }
 }
