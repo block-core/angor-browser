@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';
@@ -59,7 +59,8 @@ import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.
     HttpClientModule,
     OverlayscrollbarsModule,
      MatDialogModule,
-     FormsModule
+     FormsModule,
+      ReactiveFormsModule,   
   ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],

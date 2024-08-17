@@ -5,6 +5,7 @@ import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { User } from '../../../models/user.model';
 import { RelayService } from '../../services/relay.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-nostr',
@@ -32,11 +33,17 @@ export class ProfileComponent implements OnInit {
   publishedEventContent: string = '';
   metadata: any = null;
 
-  constructor(public nostrService: NostrService,public relayService: RelayService) {}
+  constructor(public nostrService: NostrService,public relayService: RelayService  , private router:Router) {}
 
   ngOnInit() {
     this.loadNostrPublicKeyFromLocalStorage();
+    if (!this.publicKey || !this.isAuthenticated) {
+      this.router.navigate(['/home']);
+    } else {
+      this.fetchUserData();
+    }
   }
+
 
   loginWithNostrExtension() {
     this.connectNostrExtension();
@@ -117,14 +124,18 @@ export class ProfileComponent implements OnInit {
         this.nostrPublicKey = publicKey;
         this.isAuthenticated = true;
         this.accountType = secretKeyHex ? 'new' : 'extension';
-
-        this.fetchFollowersAndFollowing();
-        this.fetchEventsByAuthor();
+      } else {
+        this.isAuthenticated = false;
       }
       if (secretKeyHex) {
         this.secretKeyHex = secretKeyHex;
       }
     }
+  }
+
+  fetchUserData() {
+    this.fetchFollowersAndFollowing();
+    this.fetchEventsByAuthor();
   }
 
   async fetchAndAddPublicRelays() {

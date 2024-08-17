@@ -1,227 +1,58 @@
-import { Component, OnInit } from '@angular/core';
-import { NostrService } from '../../../services/nostr.service';
- import { NostrEvent } from 'nostr-tools/pure';
-import * as secp256k1 from '@noble/secp256k1';
-import { sha256 } from '@noble/hashes/sha256';
-import { User } from '../../../../models/user.model';
-import { RelayService } from '../../../services/relay.service';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { privateKeyFromSeedWords, accountFromSeedWords } from 'nostr-tools/nip06';
+import { SecurityService } from '../../../services/security.service';
 
 @Component({
   selector: 'app-menemonic',
   templateUrl: './menemonic.component.html',
   styleUrls: ['./menemonic.component.css'],
 })
-export class MenemonicComponent implements OnInit {
+export class MenemonicComponent {
+  mnemonic: string = '';
+  passphrase: string = '';
+  privateKey: string = '';
   publicKey: string = '';
-  secretKeyHex: string = '';
-  eventContent: string = '';
-  newRelayUrl: string = '';
-  connectionStatus: string = '';
-  connectButtonText: string = 'Connect to Relays';
-  events: NostrEvent[] = [];
-  relays: any[] = [];
-  followers: User[] = [];
-  following: User[] = [];
-  nostrExtensionPublicKey: string = '';
-  nostrPublicKey: string = '';
-  nostrSignedEvent: any;
-  nostrCipher: string | null = null;
-  nostrDecrypted: string | null = null;
-  isAuthenticated: boolean = false;
-  accountType: string = '';
-  publishedEventContent: string = '';
-  metadata: any = null;
+  errorMessage: string = '';
+  successMessage: string = '';
 
-  constructor(public nostrService: NostrService,public relayService: RelayService) {}
+  constructor(private router: Router, private security: SecurityService) {}
 
-  ngOnInit() {
-    this.loadNostrPublicKeyFromLocalStorage();
-  }
-
-  loginWithNostrExtension() {
-    this.connectNostrExtension();
-  }
-
-  async connectNostrExtension() {
+  async onSubmit() {
     try {
-      const gt = globalThis as any;
-      const publicKey = await gt.nostr.getPublicKey();
-      const relays = await gt.nostr.getRelays();
-      const metadata = await this.nostrService.fetchMetadata(publicKey);
+      this.errorMessage = '';
+      const accountIndex = 0; // You can change the index if needed
+      this.privateKey = privateKeyFromSeedWords(this.mnemonic, this.passphrase, accountIndex);
 
-      this.nostrExtensionPublicKey = publicKey;
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('nostrPublicKey', publicKey);
-      }
-      this.nostrPublicKey = publicKey;
-      this.metadata = metadata;
-
-      if (relays && typeof relays === 'object') {
-        Object.keys(relays).forEach((relayUrl: string) => {
-          this.nostrService.addRelay(relayUrl);
-        });
-      }
-      this.relays = this.relayService.relays;
-
-      this.isAuthenticated = true;
-      this.accountType = 'extension';
+      const { publicKey } = accountFromSeedWords(this.mnemonic, this.passphrase, accountIndex);
       this.publicKey = publicKey;
 
-      this.fetchFollowersAndFollowing();
-      this.fetchEventsByAuthor();
-    } catch (error) {
-      console.error('Failed to connect to Nostr extension:', error);
-    }
-  }
+      const encrypted = await this.security.encryptData(this.privateKey, this.passphrase);
+      const decrypted = await this.security.decryptData(encrypted, this.passphrase);
 
-  async fetchFollowersAndFollowing() {
-    try {
-      this.followers = await this.nostrService.getFollowers(this.publicKey);
-      this.following = await this.nostrService.getFollowing(this.publicKey);
-    } catch (error) {
-      console.error('Failed to fetch followers and following:', error);
-    }
-  }
-
-  async fetchEventsByAuthor() {
-    try {
-      this.events = await this.nostrService.getEventsByAuthor(this.publicKey);
-    } catch (error) {
-      console.error('Failed to fetch events by author:', error);
-    }
-  }
-
-  generateNewAccount() {
-    const keys = this.nostrService.generateNewAccount();
-    this.publicKey = keys.publicKey;
-    this.secretKeyHex = keys.secretKeyHex;
-
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('nostrPublicKey', keys.publicKey);
-      localStorage.setItem('nostrSecretKey', keys.secretKeyHex);
-    }
-
-    this.isAuthenticated = true;
-    this.accountType = 'new';
-
-    this.fetchFollowersAndFollowing();
-    this.fetchEventsByAuthor();
-  }
-
-  loadNostrPublicKeyFromLocalStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const publicKey = localStorage.getItem('nostrPublicKey');
-      const secretKeyHex = localStorage.getItem('nostrSecretKey');
-      if (publicKey) {
-        this.publicKey = publicKey;
-        this.nostrPublicKey = publicKey;
-        this.isAuthenticated = true;
-        this.accountType = secretKeyHex ? 'new' : 'extension';
-
-        this.fetchFollowersAndFollowing();
-        this.fetchEventsByAuthor();
+      if (this.privateKey !== decrypted) {
+        throw new Error('Encryption/Decryption failed.');
       }
-      if (secretKeyHex) {
-        this.secretKeyHex = secretKeyHex;
-      }
-    }
-  }
 
-  async fetchAndAddPublicRelays() {
-    try {
-      const gt = globalThis as any;
-      const relays = await gt.nostr.getRelays();
-      if (relays && typeof relays === 'object') {
-        Object.keys(relays).forEach((relayUrl: string) => {
-          this.nostrService.addRelay(relayUrl);
-        });
-      }
-      this.relays = this.relayService.relays;
+      localStorage.setItem('nostrPublicKey', this.publicKey);
+      localStorage.setItem('nostrSecretKey', encrypted);
+
+      this.successMessage = 'Keys successfully generated and saved!';
+      this.errorMessage = '';
+      this.router.navigate(['/profile']);
     } catch (error) {
-      console.error('Failed to fetch public relays from extension:', error);
+      this.errorMessage = (error instanceof Error) ? error.message : 'An unexpected error occurred. Please try again.';
+      this.successMessage = '';
+      console.error('Error processing mnemonic:', error);
     }
   }
 
-  async signAndPublishEvent() {
-    try {
-      const event = {
-        content: this.eventContent,
-        pubkey: this.publicKey,
-        created_at: Math.floor(Date.now() / 1000),
-        kind: 1,
-        tags: [],
-      };
-      const signedEvent = await this.nostrSignEvent(event);
-      await this.publishEvent(signedEvent);
-      this.publishedEventContent = this.eventContent;
-    } catch (error) {
-      console.error('Error signing and publishing event:', error);
-    }
-  }
-
-  async publishEvent(event: any) {
-    try {
-      await this.nostrService.publishEventToRelays(event);
-      this.events.push(event);
-    } catch (error) {
-      console.error('Error publishing event:', error);
-    }
-  }
-
-  async connectRelays() {
-    try {
-      await this.relayService.connectToRelays();
-      this.connectionStatus = `Connected to relays: ${this.relayService.relays.map(r => r.url).join(', ')}`;
-      this.connectButtonText = 'Connected';
-      this.relays = this.relayService.relays;
-      this.subscribeToEvents();
-    } catch (error) {
-      this.connectionStatus = `Failed to connect to relays`;
-      this.connectButtonText = 'Connect to Relays';
-    }
-  }
-
-  subscribeToEvents() {
-    this.nostrService.subscribeToEvents((event) => {
-      this.events.push(event);
-      console.log('Received event:', event);
-    });
-  }
-
-  addRelay() {
-    if (this.newRelayUrl) {
-      this.nostrService.addRelay(this.newRelayUrl);
-      this.newRelayUrl = '';
-    }
-  }
-
-  serializeEvent(evt: any): string {
-    return JSON.stringify([0, evt.pubkey, evt.created_at, evt.kind, evt.tags, evt.content]);
-  }
-
-  getEventHash(event: any): string {
-    const utf8Encoder = new TextEncoder();
-    const eventHash = sha256(utf8Encoder.encode(this.serializeEvent(event)));
-    return this.bytesToHex(eventHash);
-  }
-
-  async nostrSignEvent(event: any) {
-    const gt = globalThis as any;
-
-    event.id = this.getEventHash(event);
-
-    try {
-      const signedEvent = await gt.nostr.signEvent(event);
-      this.nostrSignedEvent = signedEvent;
-      return signedEvent;
-    } catch (err: any) {
-      console.error(err);
-      this.nostrSignedEvent = err.toString();
-      throw err;
-    }
-  }
-
-  bytesToHex(bytes: Uint8Array): string {
-    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  reset() {
+    this.mnemonic = '';
+    this.passphrase = '';
+    this.privateKey = '';
+    this.publicKey = '';
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 }
