@@ -5,6 +5,7 @@ import { StateService } from '../../services/state.service';
 import { NostrService } from '../../services/nostr.service';
 
 interface Project {
+  projectIdentifier:string;
   nostrPubKey: string;
   displayName?: string;
   picture?: string;
@@ -33,7 +34,7 @@ interface Project {
     if (this.projects.length === 0) {
       this.loadProjects();
     } else {
-      
+
       this.loading = false;
     }
 
@@ -102,7 +103,7 @@ interface Project {
   }
 
   goToProjectDetails(project: Project): void {
-    this.router.navigate(['/projects', project.nostrPubKey]);
+    this.router.navigate(['/projects', project.projectIdentifier]);
   }
 
   ngOnDestroy(): void {

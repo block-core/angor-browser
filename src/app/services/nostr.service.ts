@@ -92,10 +92,6 @@ export class NostrService {
   }
 
 
-
-
-
-
   private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();
   }

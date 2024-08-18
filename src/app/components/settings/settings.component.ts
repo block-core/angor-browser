@@ -7,7 +7,7 @@ import { RelayService } from '../../services/relay.service';
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.css']
+  styleUrls: ['./settings.component.css'],
 })
 export class SettingsComponent implements OnInit {
   @ViewChild('addRelayModal') addRelayModal!: TemplateRef<any>;
@@ -17,13 +17,17 @@ export class SettingsComponent implements OnInit {
   connectionStatus: string = '';
   connectButtonText: string = 'Refresh Relays';
 
-
   newIndexerUrlMainnet: string = '';
   newIndexerUrlTestnet: string = '';
-  indexersMainnet: Array<{ url: string, primary: boolean }> = [];
-  indexersTestnet: Array<{ url: string, primary: boolean }> = [];
+  indexersMainnet: Array<{ url: string; primary: boolean }> = [];
+  indexersTestnet: Array<{ url: string; primary: boolean }> = [];
 
-  constructor(private nostrService: NostrService, private relayService: RelayService,public dialog: MatDialog ,private indexerService: IndexerService) {}
+  constructor(
+    private nostrService: NostrService,
+    private relayService: RelayService,
+    public dialog: MatDialog,
+    private indexerService: IndexerService
+  ) {}
 
   ngOnInit(): void {
     this.loadRelays();
@@ -31,14 +35,14 @@ export class SettingsComponent implements OnInit {
   }
 
   loadIndexers() {
-    this.indexersMainnet = this.indexerService.getIndexers('mainnet').map(url => ({
+    this.indexersMainnet = this.indexerService.getIndexers('mainnet').map((url) => ({
       url,
-      primary: url === this.indexerService.getPrimaryIndexer('mainnet')
+      primary: url === this.indexerService.getPrimaryIndexer('mainnet'),
     }));
 
-    this.indexersTestnet = this.indexerService.getIndexers('testnet').map(url => ({
+    this.indexersTestnet = this.indexerService.getIndexers('testnet').map((url) => ({
       url,
-      primary: url === this.indexerService.getPrimaryIndexer('testnet')
+      primary: url === this.indexerService.getPrimaryIndexer('testnet'),
     }));
   }
 
@@ -54,7 +58,7 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  removeIndexer(network: string, indexer: { url: string, primary: boolean }) {
+  removeIndexer(network: string, indexer: { url: string; primary: boolean }) {
     if (network === 'mainnet') {
       this.indexerService.removeIndexer(indexer.url, 'mainnet');
     } else if (network === 'testnet') {
@@ -63,7 +67,7 @@ export class SettingsComponent implements OnInit {
     this.loadIndexers();
   }
 
-  toggleIndexerStatus(network: string, indexer: { url: string, primary: boolean }) {
+  toggleIndexerStatus(network: string, indexer: { url: string; primary: boolean }) {
     if (network === 'mainnet') {
       this.indexerService.setPrimaryIndexer(indexer.url, 'mainnet');
     } else if (network === 'testnet') {
@@ -72,9 +76,8 @@ export class SettingsComponent implements OnInit {
     this.loadIndexers();
   }
 
-
   loadRelays() {
-    this.relays = this.relayService.relays;
+    this.relays = this.relayService.getRelays();
   }
 
   openAddRelayModal() {
@@ -97,13 +100,16 @@ export class SettingsComponent implements OnInit {
   async connectRelays() {
     try {
       await this.relayService.connectToRelays();
-      this.connectionStatus = `Connected to relays: ${this.relayService.relays.map(r => r.url).join(', ')}`;
+      this.connectionStatus = `Connected to relays: ${this.relayService.getRelays()
+        .map((r) => r.url)
+        .join(', ')}`;
       this.connectButtonText = 'Connected';
     } catch (error) {
       this.connectionStatus = 'Failed to connect to relays';
       this.connectButtonText = 'Connect to Relays';
     }
   }
+
   removeRelay(relayUrl: string): void {
     this.relayService.removeRelay(relayUrl);
     this.loadRelays();

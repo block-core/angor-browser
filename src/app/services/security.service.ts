@@ -1,21 +1,28 @@
 import { Injectable } from '@angular/core';
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { base64 } from '@scure/base';
- 
-const enc = new TextEncoder();
-const dec = new TextDecoder();
 
 @Injectable({
   providedIn: 'root',
 })
 export class SecurityService {
-  getPasswordKey(password: string) {
-    return window.crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  private encoder = new TextEncoder();
+  private decoder = new TextDecoder();
+
+  private async getPasswordKey(password: string): Promise<CryptoKey> {
+    return window.crypto.subtle.importKey(
+      'raw',
+      this.encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
   }
 
-  deriveKey(passwordKey: any, salt: any, keyUsage: any) {
-    // TODO: Someone with better knowledge of cryptography should review our key sizes, iterations, etc.
+  private async deriveKey(
+    passwordKey: CryptoKey,
+    salt: Uint8Array,
+    keyUsage: KeyUsage[]
+  ): Promise<CryptoKey> {
     return window.crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
@@ -30,55 +37,54 @@ export class SecurityService {
     );
   }
 
-  async encryptData(secretData: string, password: string) {
+  async encryptData(secretData: string, password: string): Promise<string> {
     try {
       const salt = window.crypto.getRandomValues(new Uint8Array(16));
       const iv = window.crypto.getRandomValues(new Uint8Array(12));
       const passwordKey = await this.getPasswordKey(password);
       const aesKey = await this.deriveKey(passwordKey, salt, ['encrypt']);
-      const encryptedContent = await window.crypto.subtle.encrypt(
-        {
-          name: 'AES-GCM',
-          iv: iv,
-        },
-        aesKey,
-        enc.encode(secretData)
+
+      const encryptedContent = new Uint8Array(
+        await window.crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv: iv },
+          aesKey,
+          this.encoder.encode(secretData)
+        )
       );
 
-      const encryptedContentArr = new Uint8Array(encryptedContent);
-      let buff = new Uint8Array(salt.byteLength + iv.byteLength + encryptedContentArr.byteLength);
-      buff.set(salt, 0);
-      buff.set(iv, salt.byteLength);
-      buff.set(encryptedContentArr, salt.byteLength + iv.byteLength);
+      const encryptedData = new Uint8Array(salt.length + iv.length + encryptedContent.length);
+      encryptedData.set(salt, 0);
+      encryptedData.set(iv, salt.length);
+      encryptedData.set(encryptedContent, salt.length + iv.length);
 
-      return base64.encode(buff);
+      return base64.encode(encryptedData);
     } catch (e) {
-      console.error(e);
-      return '';
+      console.error('Encryption failed:', e);
+      throw new Error('Failed to encrypt data.');
     }
   }
 
-  async decryptData(encryptedData: string, password: string) {
+  async decryptData(encryptedData: string, password: string): Promise<string> {
     try {
       const encryptedDataBuff = base64.decode(encryptedData);
 
       const salt = encryptedDataBuff.slice(0, 16);
-      const iv = encryptedDataBuff.slice(16, 16 + 12);
-      const data = encryptedDataBuff.slice(16 + 12);
-      const passwordKey = await this.getPasswordKey(password.toString());
+      const iv = encryptedDataBuff.slice(16, 28);
+      const data = encryptedDataBuff.slice(28);
+
+      const passwordKey = await this.getPasswordKey(password);
       const aesKey = await this.deriveKey(passwordKey, salt, ['decrypt']);
+
       const decryptedContent = await window.crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv: iv,
-        },
+        { name: 'AES-GCM', iv: iv },
         aesKey,
         data
       );
-      return dec.decode(decryptedContent);
+
+      return this.decoder.decode(decryptedContent);
     } catch (e) {
-      console.error(e);
-      return '';
+      console.error('Decryption failed:', e);
+      throw new Error('Failed to decrypt data.');
     }
   }
 }

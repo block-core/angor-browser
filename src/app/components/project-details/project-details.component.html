@@ -5,19 +5,55 @@
         <div class="loading-spinner"></div>
       </div>
       <div *ngIf="!isLoading && selectedProject" class="profile-container">
-        <img class="profile-banner"[src]="selectedProject.banner || 'assets/images/no-banner.jpg'" onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';" alt="{{ selectedProject.name || 'Project' }}" />
-        <img class="profile-picture" [src]="selectedProject.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';" alt="{{ selectedProject.name || 'Project' }}" />
+        <!-- Project Metadata Display -->
+        <img
+          class="profile-banner"
+          [src]="selectedProjectMetadata?.banner || 'assets/images/no-banner.jpg'"
+          onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';"
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
+        />
+        <img
+          class="profile-picture"
+          [src]="selectedProjectMetadata?.picture || 'assets/images/no-image.jpg'"
+          onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
+        />
         <div class="profile-details">
           <div class="main-title-bar">
-            <h1 class="p-name section-title" itemprop="headline name">{{ selectedProject.name }}</h1>
+            <h1 class="p-name section-title" itemprop="headline name">
+              {{ selectedProjectMetadata?.name || selectedProject.projectIdentifier }}
+            </h1>
           </div>
           <div class="e-content section-entry">
-            <p>{{ selectedProject.about }}</p>
+            <p>{{ selectedProjectMetadata?.about }}</p>
           </div>
           <div class="additional-info">
-            <p *ngIf="selectedProject.additionalData?.display_name"><strong>Display Name:</strong> {{ selectedProject.additionalData.display_name }}</p>
-            <p *ngIf="selectedProject.additionalData?.website"><strong>Website:</strong> <a [href]="selectedProject.additionalData.website" target="_blank">{{ selectedProject.additionalData.website }}</a></p>
+            <p *ngIf="selectedProjectMetadata?.website">
+              <strong>Website:</strong>
+              <a [href]="selectedProjectMetadata.website" target="_blank">
+                {{ selectedProjectMetadata.website }}
+              </a>
+            </p>
           </div>
+        </div>
+        <!-- Project Stats Display -->
+        <div class="project-stats">
+          <h3>Project Stats</h3>
+          <p><strong>Investor Count:</strong> {{ selectedProjectStats?.investorCount }}</p>
+          <p><strong>Amount Invested:</strong> {{ selectedProjectStats?.amountInvested }}</p>
+          <p><strong>Amount Spent by Founder:</strong> {{ selectedProjectStats?.amountSpentSoFarByFounder }}</p>
+          <p><strong>Amount in Penalties:</strong> {{ selectedProjectStats?.amountInPenalties }}</p>
+          <p><strong>Penalty Count:</strong> {{ selectedProjectStats?.countInPenalties }}</p>
+        </div>
+        <!-- Project Details Display -->
+        <div class="project-details">
+          <h3>Project Details</h3>
+          <p><strong>Founder Key:</strong> {{ selectedProject?.founderKey }}</p>
+          <p><strong>Nostr Public Key:</strong> {{ selectedProject?.nostrPubKey }}</p>
+          <p><strong>Project Identifier:</strong> {{ selectedProject?.projectIdentifier }}</p>
+          <p><strong>Created On Block:</strong> {{ selectedProject?.createdOnBlock }}</p>
+          <p><strong>Transaction ID:</strong> {{ selectedProject?.trxId }}</p>
+          <p><strong>Total Investments Count:</strong> {{ selectedProject?.totalInvestmentsCount }}</p>
         </div>
       </div>
       <div *ngIf="!isLoading && errorMessage" class="error-message">

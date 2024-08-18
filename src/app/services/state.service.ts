@@ -10,18 +10,22 @@ export class StateService {
 
   constructor(private nostrService: NostrService) {}
 
+
   async setProjects(projects: any[]): Promise<void> {
     this.projects = projects;
     this.updateMetadataInBackground();
   }
 
+
   getProjects(): any[] {
     return this.projects;
   }
 
+
   hasProjects(): boolean {
     return this.projects.length > 0;
   }
+
 
   async updateProjectActivity(project: any): Promise<void> {
     const index = this.projects.findIndex(p => p.nostrPubKey === project.nostrPubKey);
@@ -33,12 +37,13 @@ export class StateService {
     }
 
     this.projects.sort((a, b) => b.lastActivity - a.lastActivity);
-    this.updateMetadataForProject(project);  // Update metadata for the specific project
+    await this.updateMetadataForProject(project); // Ensure metadata is updated for the project
   }
 
+
   private updateMetadataInBackground(): void {
-    // Limit the number of concurrent requests to improve performance
     const batchSize = 5;
+
     for (let i = 0; i < this.projects.length; i += batchSize) {
       const batch = this.projects.slice(i, i + batchSize);
       batch.forEach(project => this.updateMetadataForProject(project));
@@ -53,15 +58,26 @@ export class StateService {
 
     try {
       const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
-      this.applyMetadata(project, metadata);
-      this.metadataCache.set(project.nostrPubKey, metadata); // Cache the metadata
+
+      if (metadata) {
+        this.applyMetadata(project, metadata);
+        this.metadataCache.set(project.nostrPubKey, metadata); // Cache the metadata
+      } else {
+        console.warn(`Metadata is null for project ${project.nostrPubKey}.`);
+      }
     } catch (error) {
       console.error(`Error fetching metadata for project ${project.nostrPubKey}:`, error);
     }
   }
 
-  private applyMetadata(project: any, metadata: any): void {
-    project.displayName = metadata.name;
-    project.picture = metadata.picture;
+
+private applyMetadata(project: any, metadata: any): void {
+  if (metadata && typeof metadata === 'object') {
+    project.displayName = metadata.name || project.displayName;
+    project.picture = metadata.picture || project.picture;
+  } else {
+    console.warn(`Metadata for project ${project.nostrPubKey} is invalid or null.`);
   }
+}
+
 }

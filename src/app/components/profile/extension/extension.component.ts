@@ -57,8 +57,6 @@ export class ExtensionComponent implements OnInit {
         localStorage.removeItem('nostrSecretKey');
       }
 
-      this.relays = this.relayService.relays;
-
       this.isAuthenticated = true;
       this.publicKey = publicKey;
 
@@ -68,6 +66,6 @@ export class ExtensionComponent implements OnInit {
       console.error('Failed to connect to Nostr extension:', error);
     }
   }
- 
+
 
 }
