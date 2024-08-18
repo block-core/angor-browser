@@ -11,6 +11,7 @@ import { SecurityService } from '../../../services/security.service';
 export class MenemonicComponent {
   mnemonic: string = '';
   passphrase: string = '';
+  password: string = '';
   privateKey: string = '';
   publicKey: string = '';
   errorMessage: string = '';
@@ -21,14 +22,21 @@ export class MenemonicComponent {
   async onSubmit() {
     try {
       this.errorMessage = '';
+
+      if (!this.password) {
+        throw new Error('Password is required.');
+      }
+
+
+
       const accountIndex = 0; // You can change the index if needed
       this.privateKey = privateKeyFromSeedWords(this.mnemonic, this.passphrase, accountIndex);
 
       const { publicKey } = accountFromSeedWords(this.mnemonic, this.passphrase, accountIndex);
       this.publicKey = publicKey;
 
-      const encrypted = await this.security.encryptData(this.privateKey, this.passphrase);
-      const decrypted = await this.security.decryptData(encrypted, this.passphrase);
+      const encrypted = await this.security.encryptData(this.privateKey, this.password);
+      const decrypted = await this.security.decryptData(encrypted, this.password);
 
       if (this.privateKey !== decrypted) {
         throw new Error('Encryption/Decryption failed.');
@@ -50,6 +58,7 @@ export class MenemonicComponent {
   reset() {
     this.mnemonic = '';
     this.passphrase = '';
+    this.password = '';
     this.privateKey = '';
     this.publicKey = '';
     this.errorMessage = '';

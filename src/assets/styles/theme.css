@@ -197,6 +197,9 @@
     --selection-bg: #c6e1ff;
   }
 }
+*{
+  color: var(--neut-L75);
+}
 body {
   width: 100%;
 }

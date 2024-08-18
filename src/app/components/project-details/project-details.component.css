@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .project-card {
     background: var(--input-field);
     border-radius: 16px;
@@ -17,17 +17,17 @@
     margin-left: 20px;
     margin-right: 20px;
   }
-  
+
   .project-card:hover {
     background: var(--input-field-hover);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     transform: scale(1.02);
   }
-  
+
   .project-card:active {
     transform: scale(0.98);
   }
-  
+
   .profile-container {
     display: flex;
     flex-direction: column;
@@ -35,14 +35,14 @@
     text-align: center;
     margin-bottom: 20px;
   }
-  
+
   .profile-banner {
     width: 100%;
     height: 200px;
     object-fit: cover;
     border-radius: 8px 8px 0 0;
   }
-  
+
   .profile-picture {
     width: 100px;
     height: 100px;
@@ -50,34 +50,34 @@
     margin-top: -50px;
     border: 3px solid white;
   }
-  
+
   .profile-details {
     padding: 20px;
    }
-  
+
   .profile-details h1 {
     margin: 10px 0;
   }
-  
+
   .profile-details p {
     margin: 5px 0;
   }
-  
+
   .additional-info {
     margin-top: 20px;
     text-align: left;
   }
-  
+
   .additional-info p {
     margin: 5px 0;
   }
-  
+
   .text-box {
     margin-bottom: 20px;
     text-align: center;
     margin-top: 20px;
   }
-  
+
   input[type="text"],
   textarea {
     background: var(--input-field) !important;
@@ -89,12 +89,12 @@
     transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
+
   input[type="text"]::placeholder,
   textarea::placeholder {
     color: var(--neut-L30);
   }
-  
+
   input[type="text"]:focus,
   textarea:focus {
     outline: none;
@@ -102,12 +102,12 @@
     box-shadow: 0 0 0 3px rgba(63, 132, 244, 0.2);
     transform: scale(1.02);
   }
-  
+
   textarea {
     padding: 16px !important;
     resize: vertical;
   }
-  
+
   @media (hover: hover) {
     input[type="text"]:hover,
     textarea:hover {
@@ -115,13 +115,13 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
   }
-  
+
   .project-results {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .project-card {
     background: var(--input-field);
     border-radius: 16px;
@@ -146,7 +146,7 @@
     margin-bottom: 20px;
 
   }
-  
+
   .loading-spinner {
     border: 16px solid var(--primary);
     border-top: 16px solid var(--neut-L90);
@@ -155,19 +155,20 @@
     height: 80px;
     animation: spin 2s linear infinite;
   }
-  
+
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-  
+
   .error-message {
     color: red;
     text-align: center;
     margin-top: 20px;
+    margin-bottom: 20px;
+
   }
-  
+
   .section-main {
     padding: 0 !important;
   }
-  

@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { NostrService } from '../../../services/nostr.service';
- import { NostrEvent } from 'nostr-tools/pure';
-import * as secp256k1 from '@noble/secp256k1';
-import { sha256 } from '@noble/hashes/sha256';
-import { User } from '../../../../models/user.model';
 import { RelayService } from '../../../services/relay.service';
 import { Router } from '@angular/router';
+import { SecurityService } from '../../../services/security.service';
+import { NostrEvent } from 'nostr-tools/pure';
 
 @Component({
   selector: 'app-new-account',
@@ -14,47 +12,78 @@ import { Router } from '@angular/router';
 })
 export class NewComponent implements OnInit {
   publicKey: string = '';
-  secretKeyHex: string = '';
-  eventContent: string = '';
-  newRelayUrl: string = '';
-  connectionStatus: string = '';
-  connectButtonText: string = 'Connect to Relays';
-  events: NostrEvent[] = [];
-  relays: any[] = [];
-  followers: User[] = [];
-  following: User[] = [];
-  nostrExtensionPublicKey: string = '';
-  nostrPublicKey: string = '';
-  nostrSignedEvent: any;
-  nostrCipher: string | null = null;
+  privateKeyHex: string = '';
+  password: string = '';
+  name: string = '';
+  about: string = '';
   nostrDecrypted: string | null = null;
   isAuthenticated: boolean = false;
-  accountType: string = '';
-  publishedEventContent: string = '';
-  metadata: any = null;
+  errorMessage: string = '';
 
-  constructor(public nostrService: NostrService,public relayService: RelayService, private router:Router) {}
+  constructor(
+    public nostrService: NostrService,
+    public relayService: RelayService,
+    private router: Router,
+    private security: SecurityService
+  ) {}
 
-  ngOnInit() {
-   }
+  ngOnInit() {}
 
+  async generateNewAccount() {
+    try {
+      const keys = this.nostrService.generateNewAccount();
+      this.publicKey = keys.publicKey;
+      this.privateKeyHex = keys.secretKeyHex;
 
+      if (!this.password) {
+        throw new Error('Password is required.');
+      }
+      const encrypted = await this.security.encryptData(this.privateKeyHex, this.password);
+      const decrypted = await this.security.decryptData(encrypted, this.password);
 
-  generateNewAccount() {
-    const keys = this.nostrService.generateNewAccount();
-    this.publicKey = keys.publicKey;
-    this.secretKeyHex = keys.secretKeyHex;
+      if (this.privateKeyHex !== decrypted) {
+        throw new Error('Encryption/Decryption failed.');
+      }
+      
+      const encryptedSecretKey = await this.security.encryptData(this.privateKeyHex, this.password);
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('nostrPublicKey', keys.publicKey);
-      localStorage.setItem('nostrSecretKey', keys.secretKeyHex);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('nostrPublicKey', keys.publicKey);
+        localStorage.setItem('nostrSecretKey', encryptedSecretKey);
+      }
+
+      await this.updateMetadata();
+
+      this.isAuthenticated = true;
+      this.errorMessage = '';
+      this.router.navigate(['/profile']);
+    } catch (error) {
+      this.errorMessage = (error instanceof Error) ? error.message : 'An unexpected error occurred. Please try again.';
+      console.error('Error generating new account:', error);
     }
-
-    this.isAuthenticated = true;
-    this.accountType = 'new';
-
-    this.router.navigate(['/profile']);
-
   }
 
+  async updateMetadata() {
+    try {
+      const metadata: NostrEvent = {
+        kind: 0,
+        pubkey: this.publicKey,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [],
+        content: JSON.stringify({
+          name: this.name,
+          about: this.about,
+        }),
+        id: '',
+        sig: '',
+      };
+
+       const signedMetadata = await this.nostrService.signEvent(metadata, this.privateKeyHex);
+
+       await this.nostrService.publishEventToRelays(signedMetadata);
+    } catch (error) {
+      console.error('Error updating metadata:', error);
+      throw new Error('Failed to update metadata.');
+    }
+  }
 }

@@ -1,7 +1,3 @@
-*{
-  color: var(--neut-L75);
-}
-
 .section-main{
   padding: 0;
 }
@@ -46,8 +42,8 @@
 }
 
 .loading-spinner {
-  border: 16px solid #ccc;
-  border-top: 16px solid #333;
+  border: 16px solid var(--primary);
+  border-top: 16px solid var(--neut-L90);
   border-radius: 50%;
   width: 80px;
   height: 80px;
@@ -63,4 +59,5 @@
   color: red;
   text-align: center;
   margin-top: 20px;
+  margin-bottom: 20px;
 }

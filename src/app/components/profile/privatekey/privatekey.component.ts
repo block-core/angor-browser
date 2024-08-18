@@ -28,6 +28,10 @@ export class PrivatekeyComponent {
         throw new Error('Private or public key is missing.');
       }
 
+      if (!this.password) {
+        throw new Error('Password is required.');
+      }
+
       const encrypted = await this.security.encryptData(this.privateKeyHex, this.password);
       const decrypted = await this.security.decryptData(encrypted, this.password);
 
@@ -38,7 +42,7 @@ export class PrivatekeyComponent {
       localStorage.setItem('nostrPublicKey', this.publicKeyHex);
       localStorage.setItem('nostrSecretKey', encrypted);
 
-      this.successMessage = 'Keys successfully saved!';
+      this.successMessage = 'Keys and password successfully saved!';
       this.errorMessage = '';
       this.router.navigate(['/profile']);
     } catch (error) {
@@ -65,7 +69,6 @@ export class PrivatekeyComponent {
         const decoded = nip19.decode(this.privateKey);
         this.privateKeyHex = decoded.data as string;
         console.log(this.privateKeyHex);
-
       } else if (/^[0-9a-fA-F]{64}$/.test(this.privateKey)) {
         this.privateKeyHex = this.privateKey;
       } else {

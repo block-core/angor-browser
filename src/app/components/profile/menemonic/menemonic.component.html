@@ -8,28 +8,20 @@
             <span class="section-title">Generate Keys from Mnemonic</span>
           </h1>
         </div>
-
       </header>
       <div class="e-content article-entry" itemprop="articleBody">
         <form (submit)="onSubmit()">
           <div class="form-group">
-            <input
-              [(ngModel)]="mnemonic"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="Enter your mnemonic"
-              type="text"
-              class="input-text"
-              required
-            />
+            <input [(ngModel)]="mnemonic" [ngModelOptions]="{ standalone: true }" placeholder="Enter your mnemonic"
+              type="text" class="input-text" required />
           </div>
           <div class="form-group">
-            <input
-              [(ngModel)]="passphrase"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="Optional passphrase"
-              type="text"
-              class="input-text"
-            />
+            <input [(ngModel)]="passphrase" [ngModelOptions]="{ standalone: true }" placeholder="Optional passphrase"
+              type="text" class="input-text" />
+          </div>
+          <div class="form-group">
+            <input [(ngModel)]="password" [ngModelOptions]="{ standalone: true }" placeholder="Password" type="password"
+              class="input-text" required />
           </div>
           <button type="submit" class="auth-button">Generate Keys</button>
         </form>
@@ -44,5 +36,3 @@
     </div>
   </div>
 </section>
-
- 

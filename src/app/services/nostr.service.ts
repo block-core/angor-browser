@@ -10,7 +10,9 @@ import { bytesToHex } from '@noble/hashes/utils';
 import { RelayService } from './relay.service';
 import { User } from '../../models/user.model';
 import { Filter } from 'nostr-tools';
-
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha256';
+ import { hexToBytes } from '@noble/hashes/utils';
 @Injectable({
   providedIn: 'root',
 })
@@ -62,6 +64,37 @@ export class NostrService {
   verifyEvent(event: NostrEvent): boolean {
     return verifyEvent(event);
   }
+
+  async getEventId(event: NostrEvent): Promise<string> {
+    // The event ID is typically the SHA-256 hash of the serialized event data
+    const eventSerialized = JSON.stringify([
+      0, // The NIP-01 spec for the event ID generation includes the value "0" as the first item in the array
+      event.pubkey,
+      event.created_at,
+      event.kind,
+      event.tags,
+      event.content,
+    ]);
+    return bytesToHex(await sha256(eventSerialized));
+  }
+
+  async signEvent(event: NostrEvent, secretKeyHex: string): Promise<NostrEvent> {
+     const secretKey = hexToBytes(secretKeyHex);
+
+     const signedEvent = finalizeEvent(event, secretKey);
+
+     return signedEvent;
+  }
+
+  bigintToHexString(bigint: bigint): string {
+    // Convert bigint to hex string and pad to 64 characters
+    return bigint.toString(16).padStart(64, '0');
+  }
+
+
+
+
+
 
   private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();

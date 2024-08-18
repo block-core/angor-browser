@@ -1,18 +1,13 @@
-
-
 *{
   color: var(--neut-L75);
 }
+
 .section-inner {
   background-color: var(--background-color);
   color: var(--text-color);
   border-radius: 8px;
   box-shadow: 0 4px 8px var(--card-shadow);
 }
-
-
-
-
 
  .meta-info-bar .meta-info {
   color: var(--secondary-color);

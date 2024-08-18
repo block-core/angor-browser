@@ -47,7 +47,6 @@ export class ExtensionComponent implements OnInit {
     try {
       const gt = globalThis as any;
       const publicKey = await gt.nostr.getPublicKey();
-      const relays = await gt.nostr.getRelays();
       const metadata = await this.nostrService.fetchMetadata(publicKey);
 
       this.nostrExtensionPublicKey = publicKey;
@@ -59,11 +58,6 @@ export class ExtensionComponent implements OnInit {
         localStorage.removeItem('nostrSecretKey');
       }
 
-      if (relays && typeof relays === 'object') {
-        Object.keys(relays).forEach((relayUrl: string) => {
-          this.nostrService.addRelay(relayUrl);
-        });
-      }
       this.relays = this.relayService.relays;
 
       this.isAuthenticated = true;
@@ -95,5 +89,5 @@ export class ExtensionComponent implements OnInit {
       }
     }
   }
- 
+
 }

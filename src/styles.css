@@ -1,5 +1,7 @@
 @import 'overlayscrollbars/styles/overlayscrollbars.css';
+
 input[type="text"],
+input[type="password"],
 textarea {
   background: var(--input-field) !important;
   border-radius: 8px !important;
@@ -10,15 +12,17 @@ textarea {
   transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 input[type="text"]::placeholder,
+input[type="password"]::placeholder,
 textarea::placeholder {
   color: var(--neut-L30);
 }
 
 input[type="text"]:focus,
+input[type="password"]:focus,
 textarea:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(63, 132, 244, 0.2);
@@ -32,20 +36,25 @@ textarea {
 
 @media (hover: hover) {
   input[type="text"]:hover,
+  input[type="password"]:hover,
   textarea:hover {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   }
 }
-path{
-  fill:var(--card-btn-icon);
+
+path {
+  fill: var(--card-btn-icon);
 }
- .custom-dialog-container .mat-dialog-container {
-    border-radius: 10px;
-    padding: 20px;
-  }
+
+.custom-dialog-container .mat-dialog-container {
+  border-radius: 10px;
+  padding: 20px;
+}
+
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-.auth-button, .action-button  {
+
+.auth-button, .action-button {
   background: none;
   border: 0;
   margin: 15px 0;
@@ -71,17 +80,21 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   -ms-transition: background 0.15s ease-out;
   transition: background 0.15s ease-out;
 }
+
 .auth-button:hover, .action-button:hover {
   background: var(--btn-text-hover);
 }
+
 .auth-button:active, .action-button:active {
   background: var(--btn-text-active);
 }
+
 body::-webkit-scrollbar {
   width: 8px;
   background-color: transparent;
 }
-  body::-webkit-scrollbar-thumb {
+
+body::-webkit-scrollbar-thumb {
   background-color: rgba(87, 87, 87, 0.5);
   border-radius: 5px;
 }
