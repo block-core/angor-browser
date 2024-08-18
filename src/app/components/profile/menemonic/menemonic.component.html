@@ -23,15 +23,14 @@
             <input [(ngModel)]="password" [ngModelOptions]="{ standalone: true }" placeholder="Password" type="password"
               class="input-text" required />
           </div>
+          <div *ngIf="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+          <div *ngIf="successMessage" class="success-message">
+            {{ successMessage }}
+          </div>
           <button type="submit" class="auth-button">Generate Keys</button>
         </form>
-
-        <div *ngIf="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-        <div *ngIf="successMessage" class="success-message">
-          {{ successMessage }}
-        </div>
       </div>
     </div>
   </div>

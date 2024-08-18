@@ -10,34 +10,6 @@
         </div>
         <button class="auth-button" (click)="loginWithNostrExtension()">Login with Nostr Extension</button>
       </header>
-      <div *ngIf="isAuthenticated" class="e-content article-entry" itemprop="articleBody">
-
-
-             <div *ngIf="accountType === 'extension'" class="account-info">
-               <p><strong>Public Key:</strong> <span class="key">{{ publicKey }}</span></p>
-              <div *ngIf="metadata" class="profile-container">
-                <img *ngIf="metadata.banner" class="profile-banner" [src]="metadata.banner" alt="Banner">
-                <img *ngIf="metadata.picture" class="profile-picture" [src]="metadata.picture" alt="Profile Picture">
-                <div class="profile-details">
-                  <div class="main-title-bar">
-                    <div class="main-title-dot"></div>
-                    <h1 class="p-name section-title" itemprop="headline name">{{ metadata.name }}</h1>
-                  </div>
-                  <div class="e-content section-entry">
-                    <p>{{ metadata.about }}</p>
-                  </div>
-                  <div class="additional-info">
-                    <p *ngIf="metadata.contact"><strong>Contact:</strong> {{ metadata.contact }}</p>
-                    <p *ngIf="metadata.website"><strong>Website:</strong> <a [href]="metadata.website" target="_blank">{{ metadata.website }}</a></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-         
-
-
-
-      </div>
     </div>
   </div>
 </section>

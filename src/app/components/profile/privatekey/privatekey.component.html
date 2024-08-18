@@ -18,12 +18,14 @@
           <div class="form-group">
             <input [(ngModel)]="password" [ngModelOptions]="{standalone: true}" placeholder="Password" type="password" class="input-text" required />
           </div>
+          
+          <div *ngIf="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
           <button type="submit" class="auth-button">Submit</button>
         </form>
 
-        <div *ngIf="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
+
       </div>
     </div>
   </div>

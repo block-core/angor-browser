@@ -36,8 +36,7 @@ export class ExtensionComponent implements OnInit {
   constructor(public nostrService: NostrService,public relayService: RelayService , private router:Router) {}
 
   ngOnInit() {
-    this.loadNostrPublicKeyFromLocalStorage();
-  }
+   }
 
   loginWithNostrExtension() {
     this.connectNostrExtension();
@@ -61,7 +60,6 @@ export class ExtensionComponent implements OnInit {
       this.relays = this.relayService.relays;
 
       this.isAuthenticated = true;
-      this.accountType = 'extension';
       this.publicKey = publicKey;
 
        this.router.navigate(['/profile']);
@@ -70,24 +68,6 @@ export class ExtensionComponent implements OnInit {
       console.error('Failed to connect to Nostr extension:', error);
     }
   }
-
-
-
-  loadNostrPublicKeyFromLocalStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const publicKey = localStorage.getItem('nostrPublicKey');
-      const secretKeyHex = localStorage.getItem('nostrSecretKey');
-      if (publicKey) {
-        this.publicKey = publicKey;
-        this.nostrPublicKey = publicKey;
-        this.isAuthenticated = true;
-        this.accountType = secretKeyHex ? 'new' : 'extension';
-
-       }
-      if (secretKeyHex) {
-        this.secretKeyHex = secretKeyHex;
-      }
-    }
-  }
+ 
 
 }

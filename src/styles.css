@@ -111,3 +111,8 @@ body {
 body.idle {
   padding-right: 8px;
 }
+.form-group
+{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

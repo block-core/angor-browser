@@ -19,22 +19,15 @@
         <div class="form-group">
           <input [(ngModel)]="password" [ngModelOptions]="{standalone: true}" placeholder="Password" type="password" class="input-text" required />
         </div>
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
         <button class="auth-button" (click)="generateNewAccount()">Generate New Account</button>
       </div>
     </div>
   </div>
 </section>
 
-<section *ngIf="isAuthenticated" id="nostr-main" class="section">
-  <div class="container main-container">
-    <div class="account-info">
-      <h2>New Nostr Account</h2>
-      <p><strong>Public Key: </strong> <span class="key">{{ publicKey }}</span></p>
-      <p><strong>Private Key: </strong> <span class="key">{{ privateKeyHex }}</span></p>
-    </div>
-  </div>
-</section>
 
-<div *ngIf="errorMessage" class="error-message">
-  {{ errorMessage }}
-</div>
+
+
