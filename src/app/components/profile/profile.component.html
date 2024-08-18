@@ -6,9 +6,8 @@
       </div>
 
       <div *ngIf="!isLoading && metadata" class="profile-container">
-        <img *ngIf="metadata.banner" class="profile-banner" [src]="metadata.banner" alt="Banner">
-        <img *ngIf="metadata.picture" class="profile-picture" [src]="metadata.picture" alt="Profile Picture">
-
+         <img class="profile-banner"[src]="metadata.banner || 'assets/images/no-banner.jpg'" onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';" alt="{{ metadata.name || 'Project' }}" />
+         <img class="profile-picture" [src]="metadata.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';" alt="{{ metadata.name || 'Project' }}" />
         <div class="profile-details">
           <div class="main-title-bar">
             <h1 class="p-name section-title">{{ metadata.name }}</h1>

@@ -5,11 +5,10 @@
         <div class="loading-spinner"></div>
       </div>
       <div *ngIf="!isLoading && selectedProject" class="profile-container">
-        <img *ngIf="selectedProject.banner" class="profile-banner" [src]="selectedProject.banner" alt="Banner">
-        <img *ngIf="selectedProject.picture" class="profile-picture" [src]="selectedProject.picture" alt="Profile Picture">
+        <img class="profile-banner"[src]="selectedProject.banner || 'assets/images/no-banner.jpg'" onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';" alt="{{ selectedProject.name || 'Project' }}" />
+        <img class="profile-picture" [src]="selectedProject.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';" alt="{{ selectedProject.name || 'Project' }}" />
         <div class="profile-details">
           <div class="main-title-bar">
-            <div class="main-title-dot"></div>
             <h1 class="p-name section-title" itemprop="headline name">{{ selectedProject.name }}</h1>
           </div>
           <div class="e-content section-entry">
