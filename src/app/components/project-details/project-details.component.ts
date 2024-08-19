@@ -94,16 +94,40 @@ export class ProjectDetailsComponent implements OnInit {
     }
   }
 
-  private loadComments(nostrPubKey: string): void {
-    this.nostrService.getEventsByAuthor(nostrPubKey).then(
-      (comments) => {
-        this.comments = this.organizeCommentsAndReplies(comments);
-      },
-      (error) => {
-        this.handleError(error, 'Error fetching comments.');
-      }
-    );
+// اضافه شدن متد جدید برای تبدیل نوع تگ
+getTagType(tagType: string): string {
+  switch (tagType) {
+    case 'root':
+      return 'Root Event';
+    case 'reply':
+      return 'Reply to Event';
+    default:
+      return 'Unknown Tag';
   }
+}
+
+loadComments(nostrPubKey: string) {
+  this.nostrService.getEventsByAuthor(nostrPubKey).then(
+    (comments) => {
+      this.comments = comments.map(comment => {
+        return {
+          content: comment.content,
+          created_at: comment.created_at,
+          tags: comment.tags,
+          kind: comment.kind,
+          pubkey: comment.pubkey,
+          id: comment.id,
+          sig: comment.sig,
+        };
+      });
+    },
+    (error: any) => {
+      console.error('Error fetching comments:', error);
+      this.errorMessage = 'Error fetching comments. Please try again later.';
+    }
+  );
+}
+
 
   private loadEvents(nostrPubKey: string): void {
     this.nostrService.getEventsByAuthor(nostrPubKey).then(

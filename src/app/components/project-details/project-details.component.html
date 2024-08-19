@@ -88,6 +88,22 @@
         </div>
       </div>
 
+
+
+      <div class="comment-section">
+        <div *ngFor="let comment of comments" class="comment">
+          <p><strong>Content:</strong> {{ comment.content }}</p>
+          <p><strong>Created At:</strong> {{ comment.created_at * 1000 | date:'short' }}</p>
+          <div *ngIf="comment.tags.length > 0">
+            <p><strong>Tags:</strong></p>
+            <ul>
+              <li *ngFor="let tag of comment.tags">
+                <span><strong>{{ getTagType(tag[3]) }}:</strong> {{ tag[1] }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
