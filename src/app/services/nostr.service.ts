@@ -11,6 +11,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { RelayService } from './relay.service';
 import { Filter } from 'nostr-tools';
 import { getSharedSecret } from '@noble/secp256k1';
+import { SecurityService } from './security.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +20,7 @@ export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
 
-  constructor(private relayService: RelayService) {
+  constructor(private relayService: RelayService, private security: SecurityService) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
   }
@@ -48,7 +49,20 @@ export class NostrService {
   getPublicKeyHex(): string {
     return this.publicKey;
   }
+ // Sign event with password decryption or extension
+ async signEventWithPassword(content: string, encryptedPrivateKey: string, password: string): Promise<NostrEvent> {
+  const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
+  const secretKey = hexToBytes(decryptedPrivateKey);
+  const event = this.createEvent(content);
+  return this.signEvent(event, bytesToHex(secretKey));
+}
 
+async signEventWithExtension(content: string): Promise<NostrEvent> {
+  const gt = globalThis as any;
+  const event = this.createEvent(content);
+  const signedEvent = await gt.nostr.signEvent(event);
+  return signedEvent;
+}
   // Event management
   createEvent(content: string, kind: number = 1): NostrEvent {
     const eventTemplate = {
@@ -57,7 +71,41 @@ export class NostrService {
       tags: [],
       content,
     };
-    return finalizeEvent(eventTemplate, this.secretKey);
+
+    // Sign the event
+    const signedEvent = finalizeEvent(eventTemplate, this.secretKey);
+
+    // Ensure the signed event is properly formatted
+    if (!this.isValidHex(signedEvent.id)) {
+      console.error('Invalid event ID generated:', signedEvent.id);
+      throw new Error('Invalid event ID format');
+    }
+
+    return signedEvent;
+  }
+
+  isValidHex(hexString: string): boolean {
+    return /^[0-9a-fA-F]+$/.test(hexString) && hexString.length % 2 === 0;
+  }
+
+  async signEvent(event: NostrEvent, secretKeyHex: string): Promise<NostrEvent> {
+    const secretKey = hexToBytes(secretKeyHex);
+
+    // Check if the secret key is valid
+    if (!this.isValidHex(secretKeyHex)) {
+      console.error('Invalid secret key provided:', secretKeyHex);
+      throw new Error('Invalid secret key format');
+    }
+
+    const signedEvent = finalizeEvent(event, secretKey);
+
+    // Validate the event
+    if (!this.isValidHex(signedEvent.id)) {
+      console.error('Invalid signed event ID:', signedEvent.id);
+      throw new Error('Invalid signed event format');
+    }
+
+    return signedEvent;
   }
 
   async getEventId(event: NostrEvent): Promise<string> {
@@ -72,35 +120,72 @@ export class NostrService {
     return bytesToHex(await sha256(eventSerialized));
   }
 
-  async signEvent(event: NostrEvent, secretKeyHex: string): Promise<NostrEvent> {
-    const secretKey = hexToBytes(secretKeyHex);
-    const signedEvent = finalizeEvent(event, secretKey);
-    return signedEvent;
-  }
+ 
 
   verifyEvent(event: NostrEvent): boolean {
     return verifyEvent(event);
   }
+
+
+  async sendComment(postId: string, commentContent: string): Promise<NostrEvent> {
+    // Create the comment event
+    const commentEvent = this.createEvent(commentContent, 1); // Using kind 1 for text posts/comments
+    commentEvent.tags.push(['e', postId]); // Reference the original post/event ID
+
+    // Sign and publish the comment event
+    const signedEvent = finalizeEvent(commentEvent, this.secretKey);
+    return this.publishEventToRelays(signedEvent);
+  }
+
 
   // Relay management
   private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();
   }
 
+
   async publishEventToRelays(event: NostrEvent): Promise<NostrEvent> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
 
-    try {
-      await Promise.any(pool.publish(connectedRelays, event));
-      console.log('Event published:', event);
-      return event;
-    } catch (error) {
-      console.error('Failed to publish event:', error);
-      throw error;
+    if (connectedRelays.length === 0) {
+        throw new Error('No connected relays');
     }
-  }
+
+    const publishPromises = connectedRelays.map(async (relayUrl) => {
+        try {
+            await pool.publish([relayUrl], event);
+            console.log(`Event published to relay: ${relayUrl}`);
+            return event;
+        } catch (error) {
+            console.error(`Failed to publish event to relay: ${relayUrl}`, error);
+            throw error;
+        }
+    });
+
+    try {
+        await Promise.any(publishPromises);
+        return event;
+    } catch (aggregateError) {
+        console.error('Failed to publish event: AggregateError', aggregateError);
+        this.handlePublishFailure(aggregateError);
+        throw aggregateError;
+    }
+}
+
+private handlePublishFailure(error: unknown): void {
+    if (error instanceof AggregateError) {
+        // Specific handling for AggregateError
+        console.error('All relays failed to publish the event. Retrying...');
+        // Optional: Implement retry logic here or show a user-friendly message
+    } else {
+        console.error('An unexpected error occurred:', error);
+    }
+}
+
+// Add more robust error handling and retry logic if needed
+
 
   subscribeToEvents(callback: (event: NostrEvent) => void): void {
     this.ensureRelaysConnected().then(() => {
@@ -289,7 +374,7 @@ export class NostrService {
       });           },
       );
     } ;
-   
+
 
   async createGroup(name: string, description: string): Promise<NostrEvent> {
     const content = JSON.stringify({ name, description });

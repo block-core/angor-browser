@@ -30,8 +30,10 @@ import { ExtensionComponent } from './components/profile/extension/extension.com
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
 import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
-
-@NgModule({
+import { PasswordDialogComponent } from './components/password-dialog/password-dialog.component';
+ import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+ @NgModule({
   declarations: [
     AppComponent,
     ProfileComponent,
@@ -50,7 +52,8 @@ import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.
     ExtensionComponent,
     NewComponent,
     MenemonicComponent,
-    PrivatekeyComponent
+    PrivatekeyComponent,
+    PasswordDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -60,8 +63,10 @@ import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.
     OverlayscrollbarsModule,
      MatDialogModule,
      FormsModule,
-      ReactiveFormsModule,   
-  ],
+      ReactiveFormsModule,
+       MatFormFieldModule,
+      MatInputModule,
+   ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],
 })

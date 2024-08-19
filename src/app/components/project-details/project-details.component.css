@@ -169,6 +169,37 @@
 
   }
 
-  .section-main {
-    padding: 0 !important;
+  .e-content.article-entry {
+    max-width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .event {
+    background-color: #333; /* Dark background for contrast */
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #fff; /* White text for contrast */
+    overflow: hidden;
+  }
+
+  .event-content {
+    word-wrap: break-word;
+    max-width: 800px;
+  }
+
+  .event-content p {
+    margin: 5px 0;
+    color: #ddd; /* Light gray text for better readability */
+  }
+
+  .event-content strong {
+    color: #fff; /* White text for contrast */
+  }
+
+  .event-content p:first-of-type {
+    white-space: pre-wrap; /* Ensure long strings wrap correctly */
   }

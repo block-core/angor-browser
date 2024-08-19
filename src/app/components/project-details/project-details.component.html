@@ -4,6 +4,7 @@
       <div *ngIf="isLoading" class="loading-container">
         <div class="loading-spinner"></div>
       </div>
+
       <div *ngIf="!isLoading && selectedProject" class="profile-container">
         <!-- Project Metadata Display -->
         <img
@@ -36,18 +37,20 @@
             </p>
           </div>
         </div>
+
         <!-- Project Stats Display -->
         <div class="project-stats">
-          <h3>Project Stats</h3>
+          <h1 class="p-name section-title">Project Stats</h1>
           <p><strong>Investor Count:</strong> {{ selectedProjectStats?.investorCount }}</p>
           <p><strong>Amount Invested:</strong> {{ selectedProjectStats?.amountInvested }}</p>
           <p><strong>Amount Spent by Founder:</strong> {{ selectedProjectStats?.amountSpentSoFarByFounder }}</p>
           <p><strong>Amount in Penalties:</strong> {{ selectedProjectStats?.amountInPenalties }}</p>
           <p><strong>Penalty Count:</strong> {{ selectedProjectStats?.countInPenalties }}</p>
         </div>
+
         <!-- Project Details Display -->
         <div class="project-details">
-          <h3>Project Details</h3>
+          <h1 class="p-name section-title">Project Details</h1>
           <p><strong>Founder Key:</strong> {{ selectedProject?.founderKey }}</p>
           <p><strong>Nostr Public Key:</strong> {{ selectedProject?.nostrPubKey }}</p>
           <p><strong>Project Identifier:</strong> {{ selectedProject?.projectIdentifier }}</p>
@@ -56,9 +59,35 @@
           <p><strong>Total Investments Count:</strong> {{ selectedProject?.totalInvestmentsCount }}</p>
         </div>
       </div>
+
       <div *ngIf="!isLoading && errorMessage" class="error-message">
         <p>{{ errorMessage }}</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="page-events" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Events</span>
+          </h1>
+        </div>
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        <div *ngFor="let event of events" class="event">
+          <div class="event-content">
+            <p><strong>Event Content:</strong> {{ event.content }}</p>
+            <p><strong>Created At:</strong> {{ event.created_at * 1000 | date:'short' }}</p>
+            <p><strong>Event ID:</strong> {{ event.id }}</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
