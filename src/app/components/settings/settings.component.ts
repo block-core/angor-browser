@@ -86,7 +86,7 @@ export class SettingsComponent implements OnInit {
 
   addRelay() {
     if (this.newRelayUrl) {
-      this.nostrService.addRelay(this.newRelayUrl);
+      this.relayService.addRelay(this.newRelayUrl);
       this.newRelayUrl = '';
       this.dialog.closeAll();
     }

@@ -3,8 +3,7 @@ import { NostrService } from '../../../services/nostr.service';
  import { NostrEvent } from 'nostr-tools/pure';
 import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
-import { User } from '../../../../models/user.model';
-import { RelayService } from '../../../services/relay.service';
+ import { RelayService } from '../../../services/relay.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -14,24 +13,13 @@ import { Router } from '@angular/router';
 })
 export class ExtensionComponent implements OnInit {
   publicKey: string = '';
-  secretKeyHex: string = '';
-  eventContent: string = '';
-  newRelayUrl: string = '';
-  connectionStatus: string = '';
-  connectButtonText: string = 'Connect to Relays';
-  events: NostrEvent[] = [];
-  relays: any[] = [];
-  followers: User[] = [];
-  following: User[] = [];
+
+
   nostrExtensionPublicKey: string = '';
   nostrPublicKey: string = '';
   nostrSignedEvent: any;
-  nostrCipher: string | null = null;
-  nostrDecrypted: string | null = null;
-  isAuthenticated: boolean = false;
-  accountType: string = '';
-  publishedEventContent: string = '';
-  metadata: any = null;
+   nostrDecrypted: string | null = null;
+
 
   constructor(public nostrService: NostrService,public relayService: RelayService , private router:Router) {}
 
@@ -50,14 +38,13 @@ export class ExtensionComponent implements OnInit {
 
       this.nostrExtensionPublicKey = publicKey;
       this.nostrPublicKey = publicKey;
-      this.metadata = metadata;
 
        if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem('nostrPublicKey', publicKey);
         localStorage.removeItem('nostrSecretKey');
       }
 
-      this.isAuthenticated = true;
+
       this.publicKey = publicKey;
 
        this.router.navigate(['/profile']);

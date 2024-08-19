@@ -5,14 +5,13 @@ import {
   finalizeEvent,
   verifyEvent,
   Event as NostrEvent,
-} from 'nostr-tools/pure'; // Ensure correct path
-import { bytesToHex } from '@noble/hashes/utils';
-import { RelayService } from './relay.service';
-import { User } from '../../models/user.model';
-import { Filter } from 'nostr-tools';
-import { secp256k1 } from '@noble/curves/secp256k1';
+} from 'nostr-tools/pure';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
- import { hexToBytes } from '@noble/hashes/utils';
+import { RelayService } from './relay.service';
+import { Filter } from 'nostr-tools';
+import { getSharedSecret } from '@noble/secp256k1';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -20,13 +19,12 @@ export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
 
-  constructor(
-    private relayService: RelayService,
-  ) {
+  constructor(private relayService: RelayService) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
   }
 
+  // Account management
   generateNewAccount(): { publicKey: string; secretKeyHex: string } {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
@@ -51,9 +49,10 @@ export class NostrService {
     return this.publicKey;
   }
 
-  createEvent(content: string): NostrEvent {
+  // Event management
+  createEvent(content: string, kind: number = 1): NostrEvent {
     const eventTemplate = {
-      kind: 1,
+      kind,
       created_at: Math.floor(Date.now() / 1000),
       tags: [],
       content,
@@ -61,14 +60,9 @@ export class NostrService {
     return finalizeEvent(eventTemplate, this.secretKey);
   }
 
-  verifyEvent(event: NostrEvent): boolean {
-    return verifyEvent(event);
-  }
-
   async getEventId(event: NostrEvent): Promise<string> {
-    // The event ID is typically the SHA-256 hash of the serialized event data
     const eventSerialized = JSON.stringify([
-      0, // The NIP-01 spec for the event ID generation includes the value "0" as the first item in the array
+      0,
       event.pubkey,
       event.created_at,
       event.kind,
@@ -79,21 +73,70 @@ export class NostrService {
   }
 
   async signEvent(event: NostrEvent, secretKeyHex: string): Promise<NostrEvent> {
-     const secretKey = hexToBytes(secretKeyHex);
-
-     const signedEvent = finalizeEvent(event, secretKey);
-
-     return signedEvent;
+    const secretKey = hexToBytes(secretKeyHex);
+    const signedEvent = finalizeEvent(event, secretKey);
+    return signedEvent;
   }
 
-  bigintToHexString(bigint: bigint): string {
-    // Convert bigint to hex string and pad to 64 characters
-    return bigint.toString(16).padStart(64, '0');
+  verifyEvent(event: NostrEvent): boolean {
+    return verifyEvent(event);
   }
 
-
+  // Relay management
   private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();
+  }
+
+  async publishEventToRelays(event: NostrEvent): Promise<NostrEvent> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    try {
+      await Promise.any(pool.publish(connectedRelays, event));
+      console.log('Event published:', event);
+      return event;
+    } catch (error) {
+      console.error('Failed to publish event:', error);
+      throw error;
+    }
+  }
+
+  subscribeToEvents(callback: (event: NostrEvent) => void): void {
+    this.ensureRelaysConnected().then(() => {
+      const pool = this.relayService.getPool();
+      const connectedRelays = this.relayService.getConnectedRelays();
+      pool.subscribeMany(
+        connectedRelays,
+        [{ kinds: [1] }],
+        {
+          onevent(event: NostrEvent) {
+            callback(event);
+          },
+        }
+      );
+    });
+  }
+
+  // Profile management
+  async updateProfile(name: string, about: string, picture: string): Promise<NostrEvent> {
+    const content = JSON.stringify({ name, about, picture });
+    const event = this.createEvent(content, 0);
+    return this.publishEventToRelays(event);
+  }
+
+  async getUserProfile(pubkey: string): Promise<any> {
+    const metadata = await this.fetchMetadata(pubkey);
+    const user: any = {
+      nostrPubKey: pubkey,
+      displayName: metadata.name,
+      picture: metadata.picture,
+      about: metadata.about,
+      website: metadata.website,
+      lud16: metadata.lud16,
+      nip05: metadata.nip05,
+    };
+    return user;
   }
 
   async fetchMetadata(pubkey: string): Promise<any> {
@@ -132,38 +175,57 @@ export class NostrService {
     });
   }
 
-  async publishEventToRelays(event: NostrEvent): Promise<NostrEvent> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    try {
-      await Promise.any(pool.publish(connectedRelays, event));
-      console.log('Event published:', event);
-      return event;
-    } catch (error) {
-      console.error('Failed to publish event:', error);
-      throw error;
-    }
+  // Messaging (NIP-04)
+  async sendMessageToUser(recipientPubKey: string, message: string): Promise<NostrEvent> {
+    const event = this.createEvent(message, 4);
+    event.tags.push(['p', recipientPubKey]);
+    return this.publishEventToRelays(event);
   }
 
-  subscribeToEvents(callback: (event: NostrEvent) => void): void {
-    this.ensureRelaysConnected().then(() => {
-      const pool = this.relayService.getPool();
-      const connectedRelays = this.relayService.getConnectedRelays();
-      pool.subscribeMany(
-        connectedRelays,
-        [{ kinds: [1] }],
-        {
-          onevent(event: NostrEvent) {
-            callback(event);
-          },
-        }
-      );
-    });
+  async sendEncryptedMessageToUser(recipientPubKey: string, message: string): Promise<NostrEvent> {
+    const encryptedMessage = await this.encryptMessage(recipientPubKey, message);
+    const event = this.createEvent(encryptedMessage, 4);
+    event.tags.push(['p', recipientPubKey]);
+    return this.publishEventToRelays(event);
   }
 
-  async getUsers(): Promise<User[]> {
+  private async encryptMessage(recipientPubKey: string, message: string): Promise<string> {
+    const sharedSecret = getSharedSecret(this.secretKey, hexToBytes(recipientPubKey));
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+    const aesKey = await window.crypto.subtle.importKey(
+      'raw',
+      sharedSecret.slice(0, 16),
+      'AES-GCM',
+      false,
+      ['encrypt']
+    );
+
+    const encryptedContent = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      aesKey,
+      new TextEncoder().encode(message)
+    );
+
+    const encryptedMessage = new Uint8Array([...iv, ...new Uint8Array(encryptedContent)]);
+    return btoa(String.fromCharCode(...encryptedMessage));
+  }
+
+  // Reactions (NIP-45)
+  async reactToEvent(eventId: string, reaction: string): Promise<NostrEvent> {
+    const event = this.createEvent(reaction, 30);
+    event.tags.push(['e', eventId]);
+    return this.publishEventToRelays(event);
+  }
+
+  async rateEvent(eventId: string, rating: number): Promise<NostrEvent> {
+    const event = this.createEvent(`Rating: ${rating}`, 31);
+    event.tags.push(['e', eventId]);
+    return this.publishEventToRelays(event);
+  }
+
+  // Channels & Groups (NIP-28)
+  async getChannels(): Promise<NostrEvent[]> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
@@ -173,7 +235,196 @@ export class NostrService {
     }
 
     return new Promise((resolve) => {
-      const users: User[] = [];
+      const channels: NostrEvent[] = [];
+      const sub = pool.subscribeMany(
+        connectedRelays,
+        [{ kinds: [40] }],
+        {
+          onevent(event: NostrEvent) {
+            channels.push(event);
+          },
+          oneose() {
+            sub.close();
+            resolve(channels);
+          },
+        }
+      );
+    });
+  }
+
+  async createChannel(name: string, description: string): Promise<NostrEvent> {
+    const content = JSON.stringify({ name, description });
+    const event = this.createEvent(content, 40);
+    return this.publishEventToRelays(event);
+  }
+
+  async sendMessageToChannel(channelId: string, message: string): Promise<NostrEvent> {
+    const event = this.createEvent(message, 42);
+    event.tags.push(['e', channelId]);
+    return this.publishEventToRelays(event);
+  }
+
+  async getGroups(): Promise<NostrEvent[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    return new Promise((resolve) => {
+      const groups: NostrEvent[] = [];
+      const sub = pool.subscribeMany(
+        connectedRelays,
+        [{ kinds: [41] }],
+        {
+          onevent(event: NostrEvent) {
+            groups.push(event);
+          },
+          oneose() {
+            sub.close();
+            resolve(groups);
+ },
+      });           },
+      );
+    } ;
+   
+
+  async createGroup(name: string, description: string): Promise<NostrEvent> {
+    const content = JSON.stringify({ name, description });
+    const event = this.createEvent(content, 41); // Group creation event
+    return this.publishEventToRelays(event);
+  }
+
+  async sendMessageToGroup(groupId: string, message: string): Promise<NostrEvent> {
+    const event = this.createEvent(message, 42); // Group message event
+    event.tags.push(['e', groupId]);
+    return this.publishEventToRelays(event);
+  }
+
+  // Social interactions (Followers & Following)
+  async getFollowers(pubkey: string): Promise<any[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    const filters: Filter[] = [{ kinds: [3], '#p': [pubkey] }];
+    const followers: any[] = [];
+
+    return new Promise((resolve) => {
+      const sub = pool.subscribeMany(connectedRelays, filters, {
+        onevent(event: NostrEvent) {
+          followers.push({ nostrPubKey: event.pubkey });
+        },
+        oneose() {
+          sub.close();
+          resolve(followers);
+        },
+      });
+    });
+  }
+
+  async getFollowing(pubkey: string): Promise<any[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    const filters: Filter[] = [{ kinds: [3], authors: [pubkey] }];
+    const following: any[] = [];
+
+    return new Promise((resolve) => {
+      const sub = pool.subscribeMany(connectedRelays, filters, {
+        onevent(event: NostrEvent) {
+          const tags = event.tags.filter((tag) => tag[0] === 'p');
+          tags.forEach((tag) => {
+            following.push({ nostrPubKey: tag[1] });
+          });
+        },
+        oneose() {
+          sub.close();
+          resolve(following);
+        },
+      });
+    });
+  }
+
+  // Message retrieval (NIP-04)
+  async getKind4MessagesToMe(): Promise<NostrEvent[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    const filter1: Filter = {
+      kinds: [4],
+      '#p': [this.publicKey],
+      limit: 50,
+    };
+
+    return new Promise((resolve) => {
+      const events: NostrEvent[] = [];
+      const sub = pool.subscribeMany(connectedRelays, [filter1], {
+        onevent(event: NostrEvent) {
+          events.push(event);
+        },
+        oneose() {
+          sub.close();
+          resolve(events);
+        },
+      });
+    });
+  }
+
+  // Event retrieval by author
+  async getEventsByAuthor(pubkey: string): Promise<NostrEvent[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    const filters: Filter[] = [{ authors: [pubkey] }];
+
+    return new Promise((resolve) => {
+      const events: NostrEvent[] = [];
+      const sub = pool.subscribeMany(connectedRelays, filters, {
+        onevent(event: NostrEvent) {
+          events.push(event);
+        },
+        oneose() {
+          sub.close();
+          resolve(events);
+        },
+      });
+    });
+  }
+
+  // Retrieve all users
+  async getUsers(): Promise<any[]> {
+    await this.ensureRelaysConnected();
+    const pool = this.relayService.getPool();
+    const connectedRelays = this.relayService.getConnectedRelays();
+
+    if (connectedRelays.length === 0) {
+      throw new Error('No connected relays');
+    }
+
+    return new Promise((resolve) => {
+      const users: any[] = [];
       const sub = pool.subscribeMany(
         connectedRelays,
         [{ kinds: [0] }],
@@ -181,7 +432,7 @@ export class NostrService {
           onevent(event: NostrEvent) {
             try {
               const content = JSON.parse(event.content);
-              const user: User = {
+              const user: any = {
                 nostrPubKey: event.pubkey,
                 displayName: content.display_name,
                 picture: content.picture,
@@ -199,187 +450,6 @@ export class NostrService {
           },
         }
       );
-    });
-  }
-
-  async getMetadata(pubkey: string): Promise<any> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    return new Promise((resolve, reject) => {
-      const sub = pool.subscribeMany(
-        connectedRelays,
-        [{ authors: [pubkey], kinds: [0] }],
-        {
-          onevent(event: NostrEvent) {
-            if (event.pubkey === pubkey && event.kind === 0) {
-              try {
-                const metadata = JSON.parse(event.content);
-                resolve(metadata);
-              } catch (error) {
-                console.error('Error parsing metadata content:', error);
-                reject(null);
-              } finally {
-                sub.close();
-              }
-            }
-          },
-          oneose() {
-            sub.close();
-            resolve(null);
-          },
-        }
-      );
-    });
-  }
-
-  subscribeToUserActivities(callback: (user: User) => void): void {
-    this.ensureRelaysConnected().then(() => {
-      const pool = this.relayService.getPool();
-      const connectedRelays = this.relayService.getConnectedRelays();
-      pool.subscribeMany(connectedRelays, [{ kinds: [1] }], {
-        onevent(event: NostrEvent) {
-          try {
-            const content = JSON.parse(event.content);
-            const user: User = {
-              nostrPubKey: event.pubkey,
-              displayName: content.display_name,
-              picture: content.picture,
-              lastActivity: event.created_at,
-            };
-            callback(user);
-          } catch (error) {
-            console.error('Error parsing event content:', error);
-          }
-        },
-      });
-    });
-  }
-
-  addRelay(url: string): void {
-    if (!this.relayService.isRelayPresent(url)) {
-      this.relayService.addRelay(url);
-    }
-  }
-
-
-  async getEventsByAuthor(pubkey: string): Promise<NostrEvent[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    const filters: Filter[] = [{ authors: [pubkey] }];
-
-    return new Promise((resolve, reject) => {
-      const events: NostrEvent[] = [];
-      const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
-          events.push(event);
-        },
-        oneose() {
-          sub.close();
-          resolve(events);
-        },
-      });
-    });
-  }
-
-  async getFollowers(pubkey: string): Promise<User[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    const filters: Filter[] = [{ kinds: [3], '#p': [pubkey] }];
-    const followers: User[] = [];
-
-    return new Promise((resolve, reject) => {
-      const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
-          try {
-            followers.push({ nostrPubKey: event.pubkey } as User);
-          } catch (error) {
-            console.error('Error parsing follower event:', error);
-          }
-        },
-        oneose() {
-          sub.close();
-          resolve(followers);
-        },
-      });
-    });
-  }
-
-  async getKind4MessagesToMe(): Promise<NostrEvent[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    const filter1: Filter = {
-      kinds: [4],
-      '#p': [this.publicKey],
-      limit: 50,
-    };
-
-    return new Promise((resolve, reject) => {
-      const events: NostrEvent[] = [];
-      const sub = pool.subscribeMany(connectedRelays, [filter1], {
-        onevent(event: NostrEvent) {
-          events.push(event);
-        },
-        oneose() {
-          sub.close();
-          resolve(events);
-        },
-      });
-    });
-  }
-
-  async getFollowing(pubkey: string): Promise<User[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
-
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    const filters: Filter[] = [{ kinds: [3], authors: [pubkey] }];
-    const following: User[] = [];
-
-    return new Promise((resolve, reject) => {
-      const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
-          try {
-            const tags = event.tags.filter((tag) => tag[0] === 'p');
-            tags.forEach((tag) => {
-              following.push({ nostrPubKey: tag[1] } as User);
-            });
-          } catch (error) {
-            console.error('Error parsing following event:', error);
-          }
-        },
-        oneose() {
-          sub.close();
-          resolve(following);
-        },
-      });
     });
   }
 }

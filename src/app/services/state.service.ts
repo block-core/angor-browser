@@ -57,7 +57,7 @@ export class StateService {
     }
 
     try {
-      const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+      const metadata = await this.nostrService.fetchMetadata(project.nostrPubKey);
 
       if (metadata) {
         this.applyMetadata(project, metadata);

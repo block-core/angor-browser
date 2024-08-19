@@ -72,21 +72,35 @@ interface Project {
     });
   }
 
-  async loadMetadataForProject(project: Project): Promise<void> {
+  // async loadMetadataForProject(project: Project): Promise<void> {
+  //   try {
+  //     if ('requestIdleCallback' in window) {
+  //       window.requestIdleCallback(async () => {
+  //         const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+  //         this.updateProjectMetadata(project, metadata);
+  //       });
+  //     } else {
+  //       const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+  //       this.updateProjectMetadata(project, metadata);
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error fetching metadata for project ${project.nostrPubKey}:`, error);
+  //   }
+  // }
+
+ async loadMetadataForProject(project: Project): Promise<void> {
     try {
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(async () => {
-          const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
-          this.updateProjectMetadata(project, metadata);
-        });
-      } else {
-        const metadata = await this.nostrService.getMetadata(project.nostrPubKey);
+      const metadata = await this.nostrService.fetchMetadata(project.nostrPubKey);
+      if (metadata) {
         this.updateProjectMetadata(project, metadata);
+      } else {
+        console.warn(`No metadata found for project ${project.nostrPubKey}`);
       }
     } catch (error) {
       console.error(`Error fetching metadata for project ${project.nostrPubKey}:`, error);
     }
   }
+
   updateProjectMetadata(project: Project, metadata: any): void {
     project.displayName = metadata.name;
     project.picture = metadata.picture;

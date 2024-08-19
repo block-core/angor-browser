@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { NostrService } from '../../services/nostr.service';
 import { Router } from '@angular/router';
 import { NostrEvent } from 'nostr-tools';
-import { User } from '../../../models/user.model';
 
 @Component({
   selector: 'app-profile',
@@ -15,8 +14,8 @@ export class ProfileComponent implements OnInit {
   isLoading = true;
   errorMessage: string | null = null;
   events: NostrEvent[] = [];
-  followers: User[] = [];
-  following: User[] = [];
+  followers: any[] = [];
+  following: any[] = [];
    constructor(private nostrService: NostrService, private router: Router) {}
 
   ngOnInit() {
