@@ -120,7 +120,7 @@ async signEventWithExtension(content: string): Promise<NostrEvent> {
     return bytesToHex(await sha256(eventSerialized));
   }
 
- 
+
 
   verifyEvent(event: NostrEvent): boolean {
     return verifyEvent(event);
@@ -482,7 +482,7 @@ private handlePublishFailure(error: unknown): void {
       throw new Error('No connected relays');
     }
 
-    const filters: Filter[] = [{ authors: [pubkey] }];
+    const filters: Filter[] = [{ authors: [pubkey], kinds: [1],}];
 
     return new Promise((resolve) => {
       const events: NostrEvent[] = [];
