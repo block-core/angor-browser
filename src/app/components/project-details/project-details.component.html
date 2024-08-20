@@ -49,15 +49,13 @@
         </div>
 
         <!-- Project Details Display -->
-        <div class="project-details">
-          <h1 class="p-name section-title">Project Details</h1>
-          <p><strong>Founder Key:</strong> {{ selectedProject?.founderKey }}</p>
-          <p><strong>Nostr Public Key:</strong> {{ selectedProject?.nostrPubKey }}</p>
-          <p><strong>Project Identifier:</strong> {{ selectedProject?.projectIdentifier }}</p>
-          <p><strong>Created On Block:</strong> {{ selectedProject?.createdOnBlock }}</p>
-          <p><strong>Transaction ID:</strong> {{ selectedProject?.trxId }}</p>
-          <p><strong>Total Investments Count:</strong> {{ selectedProject?.totalInvestmentsCount }}</p>
-        </div>
+        <p><strong>Founder Key:</strong> {{ selectedProject.founderKey }}</p>
+        <p><strong>Nostr Public Key:</strong> {{ selectedProject.nostrPubKey }}</p>
+        <p><strong>Project Identifier:</strong> {{ selectedProject.projectIdentifier }}</p>
+        <p><strong>Created On Block:</strong> {{ selectedProject.createdOnBlock }}</p>
+        <p><strong>Transaction ID:</strong> {{ selectedProject.trxId }}</p>
+        <p><strong>Total Investments Count:</strong> {{ selectedProject.totalInvestmentsCount }}</p>
+
       </div>
 
       <div *ngIf="!isLoading && errorMessage" class="error-message">
