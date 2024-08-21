@@ -874,7 +874,7 @@ menu {
   }
 }
 .nav-icon,
-.main-nav-link {
+.btn-angor {
   float: left;
   color: var(--btn-text-neutral-text);
   fill: var(--btn-text-neutral-text);
@@ -887,13 +887,13 @@ menu {
   transition: background 0.15s ease-out, color 0.15s ease-out;
 }
 .nav-icon:hover,
-.main-nav-link:hover {
+.btn-angor:hover {
   background: var(--btn-text-hover);
   color: var(--btn-text-light-text);
   fill: var(--btn-text-light-text);
 }
 .nav-icon:active,
-.main-nav-link:active {
+.btn-angor:active {
   background: var(--btn-text-active);
 }
 .nav-icon {
@@ -1020,7 +1020,7 @@ menu {
 #nav-dropdown #dropdown-link-list .nav-dropdown-link:active {
   color: var(--primary);
 }
-.main-nav-link {
+.btn-angor {
   font-weight: bold;
   height: 44px;
   padding: 0px 16px;
