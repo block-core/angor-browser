@@ -122,3 +122,11 @@ body.idle {
   cursor: pointer;
   text-align: center;
 }
+button {
+  all: unset;
+  display: inline-block;
+  padding: 20px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}

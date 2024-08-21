@@ -1,18 +1,30 @@
-  <section id="page-messages" class="h-entry section section-type-page">
-    <div class="section-inner">
-      <div class="section-main">
-        <header class="section-header">
-          <div class="main-title-bar">
-            <div class="main-title-dot"></div>
-            <h1 itemprop="name">
-              <span class="section-title">Messages</span>
-            </h1>
-          </div>
+<section id="page-messages" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <div *ngIf="founderMetadata" class="profile-container">
+         <h2>{{ founderMetadata.name || 'Unknown Founder' }}</h2>
+        <p>{{ founderMetadata.about || 'No description available.' }}</p>
+      </div>
 
-        </header>
-        <div class="e-content article-entry" itemprop="articleBody">
+      <div *ngIf="!founderMetadata && errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
+      </div>
 
+       <div class="messages-container">
+        <div *ngFor="let message of messages" class="message">
+          <p>{{ message.content }}</p>
+          <small>{{ message.created_at * 1000 | date: 'short' }}</small>
         </div>
       </div>
+
+       <div class="message-form">
+        <textarea [(ngModel)]="newMessageContent" placeholder="Type your message..."></textarea>
+        <button class="btn-angor" (click)="sendMessage()">Send</button>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
+      </div>
     </div>
-  </section>
+  </div>
+</section>

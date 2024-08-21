@@ -27,7 +27,7 @@ const routes: Routes = [
 
   { path: 'projects/:id', component: ProjectDetailsComponent },
   { path: 'explore',component:ExploreComponent},
-  { path: 'messages',component:MessagesComponent},
+  { path: 'messages/:pubkey',component:MessagesComponent},
   { path: 'bookmarks',component:BookmarksComponent},
   { path: 'notifications',component:NotificationsComponent},
   { path: 'setings',component:SettingsComponent},

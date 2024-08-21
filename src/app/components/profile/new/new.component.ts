@@ -19,6 +19,7 @@ export class NewComponent implements OnInit {
   nostrDecrypted: string | null = null;
   isAuthenticated: boolean = false;
   errorMessage: string = '';
+  encryptedSecretKey: string = '';
 
   constructor(
     public nostrService: NostrService,
@@ -44,12 +45,12 @@ export class NewComponent implements OnInit {
       if (this.privateKeyHex !== decrypted) {
         throw new Error('Encryption/Decryption failed.');
       }
-      
-      const encryptedSecretKey = await this.security.encryptData(this.privateKeyHex, this.password);
+
+      this.encryptedSecretKey = await this.security.encryptData(this.privateKeyHex, this.password);
 
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem('nostrPublicKey', keys.publicKey);
-        localStorage.setItem('nostrSecretKey', encryptedSecretKey);
+        localStorage.setItem('nostrSecretKey', this.encryptedSecretKey);
       }
 
       await this.updateMetadata();
@@ -78,7 +79,13 @@ export class NewComponent implements OnInit {
         sig: '',
       };
 
-       const signedMetadata = await this.nostrService.signEvent(metadata, this.privateKeyHex);
+      const options = {
+        encryptedPrivateKey: this.encryptedSecretKey,
+        password: this.password,
+        useExtension: false,
+      };
+
+       const signedMetadata = await this.nostrService.signEvent(metadata.content, 0 ,options);
 
        await this.nostrService.publishEventToRelays(signedMetadata);
     } catch (error) {

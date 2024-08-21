@@ -39,8 +39,8 @@
         <div class="add-indexer-section">
           <input [(ngModel)]="newIndexerUrlMainnet" placeholder="New Indexer URL" type="text" class="indexer-input" />
           <div class="btns">
-            <button class="btn-angor action-button" (click)="addIndexer('mainnet')">
-              Add Indexer
+            <button class="btn-angor" (click)="addIndexer('mainnet')">
+              Add
             </button>
           </div>
         </div>
@@ -97,8 +97,8 @@
         <div class="add-indexer-section">
           <input [(ngModel)]="newIndexerUrlTestnet" placeholder="New Indexer URL" type="text" class="indexer-input" />
           <div class="btns">
-            <button class="action-button" (click)="addIndexer('testnet')">
-              Add Indexer
+            <button class="btn-angor" (click)="addIndexer('testnet')">
+              Add
             </button>
           </div>
         </div>
@@ -169,11 +169,11 @@
       <div class="add-relay-section">
         <input [(ngModel)]="newRelayUrl" placeholder="New Relay URL" type="text" class="relay-input" />
         <div class="btns">
-          <button class="action-button" (click)="addRelay()">Add Relay</button>
-          <button class="action-button" (click)="connectRelays()">{{ connectButtonText }}</button>
+          <button class="btn-angor"(click)="addRelay()">Add Relay</button>
+          <button class="btn-angor" (click)="connectRelays()">{{ connectButtonText }}</button>
         </div>
       </div>
-
+<br />
       <div class="relay-main-card">
         <span class="relay-section-link" *ngFor="let relay of relays">
           <a id="theme-btn" class="nav-icon" (click)="toggleRelayStatus(relay)">
@@ -219,7 +219,7 @@
       </div>
 
       <div class="remove-all-section">
-        <button class="action-button" (click)="removeAllCustomRelays()">Remove All Custom Relays</button>
+        <button class="btn-angor" (click)="removeAllCustomRelays()">Remove All Custom Relays</button>
       </div>
     </div>
   </div>

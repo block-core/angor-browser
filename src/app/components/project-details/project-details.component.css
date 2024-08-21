@@ -237,3 +237,9 @@
     margin-bottom: 5px;
     color: var(--neut-L75);
   }
+  .chat-button-container{
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }

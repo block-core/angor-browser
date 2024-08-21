@@ -7,23 +7,22 @@
 
       <div *ngIf="!isLoading && selectedProject" class="profile-container">
         <!-- Project Metadata Display -->
-        <img
-          class="profile-banner"
-          [src]="selectedProjectMetadata?.banner || 'assets/images/no-banner.jpg'"
+        <img class="profile-banner" [src]="selectedProjectMetadata?.banner || 'assets/images/no-banner.jpg'"
           onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';"
-          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
-        />
-        <img
-          class="profile-picture"
-          [src]="selectedProjectMetadata?.picture || 'assets/images/no-image.jpg'"
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}" />
+        <img class="profile-picture" [src]="selectedProjectMetadata?.picture || 'assets/images/no-image.jpg'"
           onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
-          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
-        />
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}" />
         <div class="profile-details">
           <div class="main-title-bar">
             <h1 class="p-name section-title" itemprop="headline name">
               {{ selectedProjectMetadata?.name || selectedProject.projectIdentifier }}
             </h1>
+          </div>
+          <div *ngIf="isLoggedIn" class="chat-button-container">
+             <button *ngIf="selectedProjectMetadata" class="btn-angor" (click)="navigateToMessages()">
+              Chat with Founder
+            </button>
           </div>
           <div class="e-content section-entry">
             <p>{{ selectedProjectMetadata?.about }}</p>
@@ -57,6 +56,8 @@
         <p><strong>Total Investments Count:</strong> {{ selectedProject.totalInvestmentsCount }}</p>
 
       </div>
+
+
 
       <div *ngIf="!isLoading && errorMessage" class="error-message">
         <p>{{ errorMessage }}</p>

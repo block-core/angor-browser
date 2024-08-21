@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { NostrService } from '../../services/nostr.service';
 import { ProjectsService, Project, ProjectStats } from '../../services/projects.service';
@@ -21,12 +21,16 @@ export class ProjectDetailsComponent implements OnInit {
   isLoading: boolean = false;
   isRelayConnected: boolean = false;
   nostrPubKey: string = '';
+  publicKey = '';
+  isLoggedIn: boolean = false;
+
 
   constructor(
     private route: ActivatedRoute,
     private nostrService: NostrService,
     private projectsService: ProjectsService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -38,6 +42,7 @@ export class ProjectDetailsComponent implements OnInit {
         this.errorMessage = 'Invalid project identifier. Please check the URL and try again.';
       }
     });
+    this.checkLoginStatus();
   }
 
   private initializeProjectData(projectIdentifier: string): void {
@@ -94,8 +99,7 @@ export class ProjectDetailsComponent implements OnInit {
     }
   }
 
-// اضافه شدن متد جدید برای تبدیل نوع تگ
-getTagType(tagType: string): string {
+ getTagType(tagType: string): string {
   switch (tagType) {
     case 'root':
       return 'Root Event';
@@ -147,9 +151,17 @@ loadComments(nostrPubKey: string) {
     })).filter(comment => !comment.tags.some(tag => tag[0] === 'e'));
   }
 
- 
 
 
+  private checkLoginStatus(): void {
+     this.isLoggedIn = !!this.nostrService.getUserPublicKey();
+   }
+
+   navigateToMessages(): void {
+    if (this.nostrPubKey) {
+      this.router.navigate(['/messages', this.nostrPubKey]);
+    }
+  }
 
 
   private handleError(error: any, fallbackMessage: string): void {

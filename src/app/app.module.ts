@@ -68,6 +68,7 @@ import { EditProfileComponent } from './components/profile/editprofile/editprofi
       ReactiveFormsModule,
        MatFormFieldModule,
       MatInputModule,
+      FormsModule
    ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],

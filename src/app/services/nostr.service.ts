@@ -25,7 +25,7 @@ export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
   private eventSubject = new Subject<NostrEvent>();
-
+  private nostrExtension: any;
   // Observable that other parts of the app can subscribe to
   public eventUpdates$ = this.eventSubject.asObservable();
 
@@ -35,6 +35,8 @@ export class NostrService {
   ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
+    this.nostrExtension = (globalThis as any).nostr; // Assuming the Nostr extension is available globally
+
   }
 
   // Account management
@@ -62,6 +64,11 @@ export class NostrService {
     return this.publicKey;
   }
 
+  getUserPublicKey(): string | null {
+     return localStorage.getItem('nostrPublicKey');
+  }
+
+
   // Sign event with password decryption or extension
   async signEventWithPassword(
     content: string,
@@ -69,11 +76,31 @@ export class NostrService {
     password: string,
     kind: number
   ): Promise<NostrEvent> {
+    // Decrypt the private key using the provided password
     const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
     const secretKey = hexToBytes(decryptedPrivateKey);
+
+    // Check if the secret key is valid
+    if (!this.isValidHex(bytesToHex(secretKey))) {
+      console.error('Invalid secret key provided:', bytesToHex(secretKey));
+      throw new Error('Invalid secret key format');
+    }
+
+    // Create a new event with the specified content and kind
     const event = this.createEvent(content, kind);
-    return this.signEvent(event, bytesToHex(secretKey));
+
+    // Finalize the event by signing it with the secret key
+    const signedEvent = finalizeEvent(event, secretKey);
+
+    // Validate the signed event
+    if (!this.isValidHex(signedEvent.id)) {
+      console.error('Invalid signed event ID:', signedEvent.id);
+      throw new Error('Invalid signed event format');
+    }
+
+    return signedEvent;
   }
+
 
 
 
@@ -84,7 +111,7 @@ export class NostrService {
 
     try {
       // Let the Nostr extension handle the signing and ID generation
-      const signedEvent = await gt.nostr.signEvent(event);
+      const signedEvent = await this.nostrExtension.signEvent(event);
 
       return signedEvent;
     } catch (error) {
@@ -120,30 +147,57 @@ export class NostrService {
   }
 
 
+ async decryptMessageWithExtension(encryptedContent: string, senderPubKey: string): Promise<string> {
+  try {
+    // Create an object representing the decryption request
+    const decryptionRequest = {
+      pubkey: senderPubKey,
+      content: encryptedContent,
+    };
+
+    // Let the Nostr extension handle the decryption
+    const decryptedMessage = await this.nostrExtension.decryptMessage(decryptionRequest);
+
+    return decryptedMessage;
+  } catch (error) {
+    console.error('Error decrypting message with extension:', error);
+    throw new Error('Failed to decrypt message with Nostr extension.');
+  }
+}
+
+async decryptPrivateKeyWithPassword(encryptedPrivateKey: string, password: string): Promise<string> {
+  try {
+    // Use the security service to decrypt the private key
+    const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
+    return decryptedPrivateKey;
+  } catch (error) {
+    console.error('Error decrypting private key with password:', error);
+    throw new Error('Failed to decrypt private key with the provided password.');
+  }
+}
 
   isValidHex(hexString: string): boolean {
     return /^[0-9a-fA-F]+$/.test(hexString) && hexString.length % 2 === 0;
   }
 
-  async signEvent(event: NostrEvent, secretKeyHex: string): Promise<NostrEvent> {
-    const secretKey = hexToBytes(secretKeyHex);
+  async signEvent(eventContent: string, kind: number, options: {
+    encryptedPrivateKey?: string;
+    password?: string;
+    useExtension?: boolean;
+  }): Promise<NostrEvent> {
+    const { encryptedPrivateKey, password, useExtension } = options;
 
-    // Check if the secret key is valid
-    if (!this.isValidHex(secretKeyHex)) {
-      console.error('Invalid secret key provided:', secretKeyHex);
-      throw new Error('Invalid secret key format');
+    if (useExtension) {
+      return this.signEventWithExtension(eventContent, kind);
     }
 
-    const signedEvent = finalizeEvent(event, secretKey);
-
-    // Validate the event
-    if (!this.isValidHex(signedEvent.id)) {
-      console.error('Invalid signed event ID:', signedEvent.id);
-      throw new Error('Invalid signed event format');
+    if (encryptedPrivateKey && password) {
+      return this.signEventWithPassword(eventContent, encryptedPrivateKey, password, kind);
     }
 
-    return signedEvent;
+    throw new Error('No valid signing method provided.');
   }
+
 
   async getEventId(event: NostrEvent): Promise<string> {
     const eventSerialized = JSON.stringify([
@@ -288,26 +342,74 @@ export class NostrService {
   }
 
   // Messaging (NIP-04)
-  async sendMessageToUser(recipientPubKey: string, message: string): Promise<NostrEvent> {
+  async sendMessageToUser(
+    recipientPubKey: string,
+    message: string,
+    signingOptions: {
+      encryptedPrivateKey?: string;
+      password?: string;
+      useExtension?: boolean;
+    }
+): Promise<NostrEvent> {
     const event = this.createEvent(message, 4);
     event.tags.push(['p', recipientPubKey]);
-    return this.publishEventToRelays(event);
-  }
 
-  async sendEncryptedMessageToUser(
+    // Sign the event based on the provided options
+    let signedEvent: NostrEvent;
+
+    if (signingOptions.useExtension) {
+        signedEvent = await this.signEventWithExtension(event.content, event.kind);
+    } else if (signingOptions.encryptedPrivateKey && signingOptions.password) {
+        signedEvent = await this.signEventWithPassword(
+            event.content,
+            signingOptions.encryptedPrivateKey,
+            signingOptions.password,
+            event.kind
+        );
+    } else {
+        throw new Error('No valid signing method provided.');
+    }
+
+    return this.publishEventToRelays(signedEvent);
+}
+
+async sendEncryptedMessageToUser(
     recipientPubKey: string,
-    message: string
-  ): Promise<NostrEvent> {
+    message: string,
+    signingOptions: {
+      encryptedPrivateKey?: string;
+      password?: string;
+      useExtension?: boolean;
+    }
+): Promise<NostrEvent> {
     const encryptedMessage = await this.encryptMessage(recipientPubKey, message);
     const event = this.createEvent(encryptedMessage, 4);
     event.tags.push(['p', recipientPubKey]);
-    return this.publishEventToRelays(event);
-  }
 
-  private async encryptMessage(
+    // Sign the event based on the provided options
+    let signedEvent: NostrEvent;
+
+    if (signingOptions.useExtension) {
+        signedEvent = await this.signEventWithExtension(event.content, event.kind);
+    } else if (signingOptions.encryptedPrivateKey && signingOptions.password) {
+        signedEvent = await this.signEventWithPassword(
+            event.content,
+            signingOptions.encryptedPrivateKey,
+            signingOptions.password,
+            event.kind
+        );
+    } else {
+        throw new Error('No valid signing method provided.');
+    }
+
+    return this.publishEventToRelays(signedEvent);
+}
+
+
+private async encryptMessage(
     recipientPubKey: string,
     message: string
-  ): Promise<string> {
+): Promise<string> {
     const sharedSecret = getSharedSecret(this.secretKey, hexToBytes(recipientPubKey));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
@@ -327,7 +429,8 @@ export class NostrService {
 
     const encryptedMessage = new Uint8Array([...iv, ...new Uint8Array(encryptedContent)]);
     return btoa(String.fromCharCode(...encryptedMessage));
-  }
+}
+
 
   // Reactions (NIP-45)
   async reactToEvent(eventId: string, reaction: string): Promise<NostrEvent> {
@@ -503,7 +606,10 @@ export class NostrService {
   }
 
   // Event retrieval by author
-  async getEventsByAuthor(pubkey: string): Promise<NostrEvent[]> {
+  async getEventsByAuthor(
+    pubkey: string,
+    kinds: number[] = [1]  // Default to kind 1 if no kinds are provided
+  ): Promise<NostrEvent[]> {
     await this.ensureRelaysConnected();
     const pool = this.relayService.getPool();
     const connectedRelays = this.relayService.getConnectedRelays();
@@ -512,7 +618,7 @@ export class NostrService {
       throw new Error('No connected relays');
     }
 
-    const filters: Filter[] = [{ authors: [pubkey], kinds: [1] }];
+    const filters: Filter[] = [{ authors: [pubkey], kinds }];
 
     return new Promise((resolve) => {
       const events: NostrEvent[] = [];
