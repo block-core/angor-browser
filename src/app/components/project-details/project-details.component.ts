@@ -147,69 +147,10 @@ loadComments(nostrPubKey: string) {
     })).filter(comment => !comment.tags.some(tag => tag[0] === 'e'));
   }
 
-  addComment(content: string): void {
-    this.signAndHandleEvent(content, (signedEvent) => {
-      this.nostrService.sendComment(this.nostrPubKey, content).then(
-        () => this.loadComments(this.nostrPubKey),
-        (error) => this.handleError(error, 'Error posting comment.')
-      );
-    });
-  }
+ 
 
-  likeComment(commentId: string): void {
-    this.signAndHandleEvent('', () => {
-      this.nostrService.reactToEvent(commentId, '👍').then(
-        () => this.loadComments(this.nostrPubKey),
-        (error) => this.handleError(error, 'Error liking comment.')
-      );
-    });
-  }
 
-  rateComment(commentId: string, rating: number): void {
-    const content = `Rating: ${rating}`;
-    this.signAndHandleEvent(content, () => {
-      this.nostrService.rateEvent(commentId, rating).then(
-        () => this.loadComments(this.nostrPubKey),
-        (error) => this.handleError(error, 'Error rating comment.')
-      );
-    });
-  }
 
-  replyToComment(comment: NostrEvent): void {
-    const content = `Replying to: ${comment.id}`;
-    this.signAndHandleEvent(content, () => {
-      this.nostrService.sendComment(comment.id, content).then(
-        () => this.loadComments(this.nostrPubKey),
-        (error) => this.handleError(error, 'Error replying to comment.')
-      );
-    });
-  }
-
-  private signAndHandleEvent(content: string, callback: (signedEvent: NostrEvent) => void): void {
-    const publicKey = localStorage.getItem('nostrPublicKey');
-    const encryptedPrivateKey = localStorage.getItem('nostrSecretKey');
-
-    if (publicKey && encryptedPrivateKey) {
-      const dialogRef = this.dialog.open(PasswordDialogComponent, {
-        width: '250px',
-        data: { message: 'Please enter your password to sign the event' },
-      });
-
-      dialogRef.afterClosed().subscribe((password) => {
-        if (password) {
-          this.nostrService.signEventWithPassword(content, encryptedPrivateKey, password).then(callback).catch(
-            (error) => this.handleError(error, 'Error signing event.')
-          );
-        }
-      });
-    } else if (publicKey) {
-      this.nostrService.signEventWithExtension(content).then(callback).catch(
-        (error) => this.handleError(error, 'Error signing event with extension.')
-      );
-    } else {
-      this.errorMessage = 'No public key found. Please ensure you are logged in.';
-    }
-  }
 
   private handleError(error: any, fallbackMessage: string): void {
     console.error(fallbackMessage, error);

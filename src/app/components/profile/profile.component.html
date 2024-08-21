@@ -6,48 +6,39 @@
       </div>
 
       <div *ngIf="!isLoading && metadata" class="profile-container">
-         <img class="profile-banner"[src]="metadata.banner || 'assets/images/no-banner.jpg'" onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';" alt="{{ metadata.name || 'Project' }}" />
-         <img class="profile-picture" [src]="metadata.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';" alt="{{ metadata.name || 'Project' }}" />
+        <img class="profile-banner" [src]="metadata.banner || 'assets/images/no-banner.jpg'" onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';" alt="{{ metadata.name || 'Project' }}" />
+        <img class="profile-picture" [src]="metadata.picture || 'assets/images/no-image.jpg'" onerror="this.onerror=null; this.src='assets/images/no-image.jpg';" alt="{{ metadata.name || 'Project' }}" />
+
         <div class="profile-details">
           <div class="main-title-bar">
             <h1 class="p-name section-title">{{ metadata.name }}</h1>
           </div>
+
+          <div class="edit-profile-container">
+            <span class="btn-angor" role="button" (click)="editProfile()">Edit Profile</span>
+          </div>
+
           <div class="e-content section-entry">
             <p>{{ metadata.about }}</p>
           </div>
+
           <div class="additional-info">
             <p *ngIf="metadata.display_name"><strong>Display Name:</strong> {{ metadata.display_name }}</p>
             <p *ngIf="metadata.website"><strong>Website:</strong> <a [href]="metadata.website" target="_blank">{{ metadata.website }}</a></p>
           </div>
         </div>
 
-
-
-
         <div>
           <h2>Followers ({{followers.length}})</h2>
-          <!-- <ul *ngIf="followers.length">
-            <li *ngFor="let follower of followers">{{ follower.nostrPubKey }}</li>
-          </ul> -->
         </div>
 
         <div>
           <h2>Following ({{following.length}})</h2>
-          <!-- <ul *ngIf="following.length">
-            <li *ngFor="let followingUser of following">{{ followingUser.nostrPubKey }}</li>
-          </ul> -->
         </div>
 
         <div>
           <h2>Events ({{events.length}})</h2>
-          <!-- <ul *ngIf="events.length">
-            <li *ngFor="let event of events">
-              <pre>{{ event.content }}</pre>
-            </li>
-          </ul> -->
         </div>
-
-        <!-- <span (click)="editProfile()">Edit Profile</span> -->
       </div>
 
       <div *ngIf="!isLoading && errorMessage" class="error-message">

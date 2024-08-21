@@ -1,0 +1,51 @@
+
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+
+button {
+  all: unset;
+  display: inline-block;
+  padding: 20px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+
+
+@media (max-width: 768px) {
+  .section-main {
+    padding: 15px;
+  }
+
+  .btn-angor {
+    width: 100%;
+  }
+}

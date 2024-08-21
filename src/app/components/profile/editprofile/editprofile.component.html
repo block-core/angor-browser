@@ -1,0 +1,37 @@
+<section id="page-notifications" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Edit Profile</span>
+          </h1>
+        </div>
+      </header>
+
+      <div class="e-content article-entry" itemprop="articleBody">
+        <form (ngSubmit)="onSubmit()" class="profile-form">
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" [(ngModel)]="name" name="name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="about">About:</label>
+            <textarea id="about" [(ngModel)]="about" name="about"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="picture">Profile Picture URL:</label>
+            <input type="text" id="picture" [(ngModel)]="picture" name="picture">
+          </div>
+
+          <div class="form-group">
+            <button class="btn-angor" type="submit">Update Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

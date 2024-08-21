@@ -1,6 +1,7 @@
-.section-main{
+.section-main {
   padding: 0;
 }
+
 .profile-container {
   display: flex;
   flex-direction: column;
@@ -27,6 +28,19 @@
 .profile-details {
   padding: 20px;
 }
+
+.main-title-bar {
+  margin-bottom: 10px;
+}
+
+.edit-profile-container {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+
 
 .additional-info p {
   margin: 5px 0;

@@ -33,6 +33,7 @@ import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.
 import { PasswordDialogComponent } from './components/password-dialog/password-dialog.component';
  import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
  @NgModule({
   declarations: [
     AppComponent,
@@ -53,7 +54,8 @@ import { MatInputModule } from '@angular/material/input';
     NewComponent,
     MenemonicComponent,
     PrivatekeyComponent,
-    PasswordDialogComponent
+    PasswordDialogComponent,
+    EditProfileComponent
   ],
   imports: [
     BrowserModule,

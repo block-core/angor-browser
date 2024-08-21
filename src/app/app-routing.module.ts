@@ -13,6 +13,7 @@ import { ExtensionComponent } from './components/profile/extension/extension.com
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
 import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
+import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -21,6 +22,8 @@ const routes: Routes = [
   { path: 'profile/privatekey', component: PrivatekeyComponent },
   { path: 'profile/menemonic', component: MenemonicComponent },
   { path: 'profile/new', component: NewComponent },
+  { path: 'profile/editprofile', component: EditProfileComponent },
+
 
   { path: 'projects/:id', component: ProjectDetailsComponent },
   { path: 'explore',component:ExploreComponent},
@@ -33,7 +36,7 @@ const routes: Routes = [
  ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, { onSameUrlNavigation: 'reload' })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

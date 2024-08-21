@@ -5,6 +5,7 @@ import {
   finalizeEvent,
   verifyEvent,
   Event as NostrEvent,
+  getEventHash,
 } from 'nostr-tools/pure';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
@@ -12,15 +13,26 @@ import { RelayService } from './relay.service';
 import { Filter } from 'nostr-tools';
 import { getSharedSecret } from '@noble/secp256k1';
 import { SecurityService } from './security.service';
+import { Subject } from 'rxjs';
+ import * as secp256k1 from '@noble/secp256k1';
 
-@Injectable({
+
+
+ @Injectable({
   providedIn: 'root',
 })
 export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
+  private eventSubject = new Subject<NostrEvent>();
 
-  constructor(private relayService: RelayService, private security: SecurityService) {
+  // Observable that other parts of the app can subscribe to
+  public eventUpdates$ = this.eventSubject.asObservable();
+
+  constructor(
+    private relayService: RelayService,
+    private security: SecurityService
+  ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
   }
@@ -49,40 +61,65 @@ export class NostrService {
   getPublicKeyHex(): string {
     return this.publicKey;
   }
- // Sign event with password decryption or extension
- async signEventWithPassword(content: string, encryptedPrivateKey: string, password: string): Promise<NostrEvent> {
-  const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
-  const secretKey = hexToBytes(decryptedPrivateKey);
-  const event = this.createEvent(content);
-  return this.signEvent(event, bytesToHex(secretKey));
-}
 
-async signEventWithExtension(content: string): Promise<NostrEvent> {
-  const gt = globalThis as any;
-  const event = this.createEvent(content);
-  const signedEvent = await gt.nostr.signEvent(event);
-  return signedEvent;
-}
-  // Event management
-  createEvent(content: string, kind: number = 1): NostrEvent {
-    const eventTemplate = {
+  // Sign event with password decryption or extension
+  async signEventWithPassword(
+    content: string,
+    encryptedPrivateKey: string,
+    password: string,
+    kind: number
+  ): Promise<NostrEvent> {
+    const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
+    const secretKey = hexToBytes(decryptedPrivateKey);
+    const event = this.createEvent(content, kind);
+    return this.signEvent(event, bytesToHex(secretKey));
+  }
+
+
+
+  async signEventWithExtension(content: string, kind: number): Promise<NostrEvent> {
+    const gt = globalThis as any;
+
+    const event = this.createEvent(content, kind);
+
+    try {
+      // Let the Nostr extension handle the signing and ID generation
+      const signedEvent = await gt.nostr.signEvent(event);
+
+      return signedEvent;
+    } catch (error) {
+      console.error('Error signing event with extension:', error);
+      throw error;
+    }
+  }
+
+  private createEvent(content: string, kind: number): NostrEvent {
+    return {
       kind,
       created_at: Math.floor(Date.now() / 1000),
       tags: [],
       content,
-    };
-
-    // Sign the event
-    const signedEvent = finalizeEvent(eventTemplate, this.secretKey);
-
-    // Ensure the signed event is properly formatted
-    if (!this.isValidHex(signedEvent.id)) {
-      console.error('Invalid event ID generated:', signedEvent.id);
-      throw new Error('Invalid event ID format');
-    }
-
-    return signedEvent;
+      pubkey: '',
+      id: '',
+      sig: '',
+    } as unknown as NostrEvent;
   }
+
+  serializeEvent(event: any): string {
+    return JSON.stringify([0, event.pubkey, event.created_at, event.kind, event.tags, event.content]);
+  }
+
+  getEventHash(event: any): string {
+    const utf8Encoder = new TextEncoder();
+    const eventHash = sha256(utf8Encoder.encode(this.serializeEvent(event)));
+    return this.bytesToHex(eventHash);
+  }
+
+  bytesToHex(bytes: Uint8Array): string {
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+
 
   isValidHex(hexString: string): boolean {
     return /^[0-9a-fA-F]+$/.test(hexString) && hexString.length % 2 === 0;
@@ -120,12 +157,9 @@ async signEventWithExtension(content: string): Promise<NostrEvent> {
     return bytesToHex(await sha256(eventSerialized));
   }
 
-
-
   verifyEvent(event: NostrEvent): boolean {
     return verifyEvent(event);
   }
-
 
   async sendComment(postId: string, commentContent: string): Promise<NostrEvent> {
     // Create the comment event
@@ -137,12 +171,10 @@ async signEventWithExtension(content: string): Promise<NostrEvent> {
     return this.publishEventToRelays(signedEvent);
   }
 
-
   // Relay management
   private async ensureRelaysConnected(): Promise<void> {
     await this.relayService.ensureConnectedRelays();
   }
-
 
   async publishEventToRelays(event: NostrEvent): Promise<NostrEvent> {
     await this.ensureRelaysConnected();
@@ -150,56 +182,51 @@ async signEventWithExtension(content: string): Promise<NostrEvent> {
     const connectedRelays = this.relayService.getConnectedRelays();
 
     if (connectedRelays.length === 0) {
-        throw new Error('No connected relays');
+      throw new Error('No connected relays');
     }
 
     const publishPromises = connectedRelays.map(async (relayUrl) => {
-        try {
-            await pool.publish([relayUrl], event);
-            console.log(`Event published to relay: ${relayUrl}`);
-            return event;
-        } catch (error) {
-            console.error(`Failed to publish event to relay: ${relayUrl}`, error);
-            throw error;
-        }
+      try {
+        await pool.publish([relayUrl], event);
+        console.log(`Event published to relay: ${relayUrl}`);
+        this.eventSubject.next(event); // Emit the event to subscribers
+        return event;
+      } catch (error) {
+        console.error(`Failed to publish event to relay: ${relayUrl}`, error);
+        throw error;
+      }
     });
 
     try {
-        await Promise.any(publishPromises);
-        return event;
+      await Promise.any(publishPromises);
+      return event;
     } catch (aggregateError) {
-        console.error('Failed to publish event: AggregateError', aggregateError);
-        this.handlePublishFailure(aggregateError);
-        throw aggregateError;
+      console.error('Failed to publish event: AggregateError', aggregateError);
+      this.handlePublishFailure(aggregateError);
+      throw aggregateError;
     }
-}
+  }
 
-private handlePublishFailure(error: unknown): void {
+  private handlePublishFailure(error: unknown): void {
     if (error instanceof AggregateError) {
-        // Specific handling for AggregateError
-        console.error('All relays failed to publish the event. Retrying...');
-        // Optional: Implement retry logic here or show a user-friendly message
+      // Specific handling for AggregateError
+      console.error('All relays failed to publish the event. Retrying...');
+      // Optional: Implement retry logic here or show a user-friendly message
     } else {
-        console.error('An unexpected error occurred:', error);
+      console.error('An unexpected error occurred:', error);
     }
-}
-
-// Add more robust error handling and retry logic if needed
-
+  }
 
   subscribeToEvents(callback: (event: NostrEvent) => void): void {
     this.ensureRelaysConnected().then(() => {
       const pool = this.relayService.getPool();
       const connectedRelays = this.relayService.getConnectedRelays();
-      pool.subscribeMany(
-        connectedRelays,
-        [{ kinds: [1] }],
-        {
-          onevent(event: NostrEvent) {
-            callback(event);
-          },
-        }
-      );
+      pool.subscribeMany(connectedRelays, [{ kinds: [1] }], {
+        onevent: (event: NostrEvent) => {
+          callback(event);
+          this.eventSubject.next(event); // Emit the event to subscribers
+        },
+      });
     });
   }
 
@@ -238,7 +265,7 @@ private handlePublishFailure(error: unknown): void {
         connectedRelays,
         [{ authors: [pubkey], kinds: [0] }],
         {
-          onevent(event: NostrEvent) {
+          onevent: (event: NostrEvent) => {
             if (event.pubkey === pubkey && event.kind === 0) {
               try {
                 const content = JSON.parse(event.content);
@@ -267,14 +294,20 @@ private handlePublishFailure(error: unknown): void {
     return this.publishEventToRelays(event);
   }
 
-  async sendEncryptedMessageToUser(recipientPubKey: string, message: string): Promise<NostrEvent> {
+  async sendEncryptedMessageToUser(
+    recipientPubKey: string,
+    message: string
+  ): Promise<NostrEvent> {
     const encryptedMessage = await this.encryptMessage(recipientPubKey, message);
     const event = this.createEvent(encryptedMessage, 4);
     event.tags.push(['p', recipientPubKey]);
     return this.publishEventToRelays(event);
   }
 
-  private async encryptMessage(recipientPubKey: string, message: string): Promise<string> {
+  private async encryptMessage(
+    recipientPubKey: string,
+    message: string
+  ): Promise<string> {
     const sharedSecret = getSharedSecret(this.secretKey, hexToBytes(recipientPubKey));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
@@ -321,19 +354,16 @@ private handlePublishFailure(error: unknown): void {
 
     return new Promise((resolve) => {
       const channels: NostrEvent[] = [];
-      const sub = pool.subscribeMany(
-        connectedRelays,
-        [{ kinds: [40] }],
-        {
-          onevent(event: NostrEvent) {
-            channels.push(event);
-          },
-          oneose() {
-            sub.close();
-            resolve(channels);
-          },
-        }
-      );
+      const sub = pool.subscribeMany(connectedRelays, [{ kinds: [40] }], {
+        onevent: (event: NostrEvent) => {
+          channels.push(event);
+          this.eventSubject.next(event); // Emit the event to subscribers
+        },
+        oneose() {
+          sub.close();
+          resolve(channels);
+        },
+      });
     });
   }
 
@@ -360,21 +390,18 @@ private handlePublishFailure(error: unknown): void {
 
     return new Promise((resolve) => {
       const groups: NostrEvent[] = [];
-      const sub = pool.subscribeMany(
-        connectedRelays,
-        [{ kinds: [41] }],
-        {
-          onevent(event: NostrEvent) {
-            groups.push(event);
-          },
-          oneose() {
-            sub.close();
-            resolve(groups);
- },
-      });           },
-      );
-    } ;
-
+      const sub = pool.subscribeMany(connectedRelays, [{ kinds: [41] }], {
+        onevent: (event: NostrEvent) => {
+          groups.push(event);
+          this.eventSubject.next(event); // Emit the event to subscribers
+        },
+        oneose() {
+          sub.close();
+          resolve(groups);
+        },
+      });
+    });
+  }
 
   async createGroup(name: string, description: string): Promise<NostrEvent> {
     const content = JSON.stringify({ name, description });
@@ -403,8 +430,9 @@ private handlePublishFailure(error: unknown): void {
 
     return new Promise((resolve) => {
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
+        onevent: (event: NostrEvent) => {
           followers.push({ nostrPubKey: event.pubkey });
+          this.eventSubject.next(event); // Emit the event to subscribers
         },
         oneose() {
           sub.close();
@@ -428,10 +456,11 @@ private handlePublishFailure(error: unknown): void {
 
     return new Promise((resolve) => {
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
+        onevent: (event: NostrEvent) => {
           const tags = event.tags.filter((tag) => tag[0] === 'p');
           tags.forEach((tag) => {
             following.push({ nostrPubKey: tag[1] });
+            this.eventSubject.next(event); // Emit the event to subscribers
           });
         },
         oneose() {
@@ -461,8 +490,9 @@ private handlePublishFailure(error: unknown): void {
     return new Promise((resolve) => {
       const events: NostrEvent[] = [];
       const sub = pool.subscribeMany(connectedRelays, [filter1], {
-        onevent(event: NostrEvent) {
+        onevent: (event: NostrEvent) => {
           events.push(event);
+          this.eventSubject.next(event); // Emit the event to subscribers
         },
         oneose() {
           sub.close();
@@ -482,13 +512,14 @@ private handlePublishFailure(error: unknown): void {
       throw new Error('No connected relays');
     }
 
-    const filters: Filter[] = [{ authors: [pubkey], kinds: [1],}];
+    const filters: Filter[] = [{ authors: [pubkey], kinds: [1] }];
 
     return new Promise((resolve) => {
       const events: NostrEvent[] = [];
       const sub = pool.subscribeMany(connectedRelays, filters, {
-        onevent(event: NostrEvent) {
+        onevent: (event: NostrEvent) => {
           events.push(event);
+          this.eventSubject.next(event); // Emit the event to subscribers
         },
         oneose() {
           sub.close();
@@ -514,7 +545,7 @@ private handlePublishFailure(error: unknown): void {
         connectedRelays,
         [{ kinds: [0] }],
         {
-          onevent(event: NostrEvent) {
+          onevent: (event: NostrEvent) => {
             try {
               const content = JSON.parse(event.content);
               const user: any = {
@@ -524,6 +555,7 @@ private handlePublishFailure(error: unknown): void {
                 lastActivity: event.created_at,
               };
               users.push(user);
+              this.eventSubject.next(event); // Emit the event to subscribers
             } catch (error) {
               console.error('Error parsing event content:', error);
             }

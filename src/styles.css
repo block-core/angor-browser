@@ -116,3 +116,9 @@ body.idle {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+.btn-angor {
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
