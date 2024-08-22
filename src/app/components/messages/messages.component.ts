@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NostrEvent } from 'nostr-tools/pure';
 import { NostrService } from '../../services/nostr.service';
-import { MessageService } from '../../services/message.service';
-import { NostrEvent } from 'nostr-tools';
 
 @Component({
   selector: 'app-messages',
@@ -10,60 +9,136 @@ import { NostrEvent } from 'nostr-tools';
   styleUrls: ['./messages.component.css'],
 })
 export class MessagesComponent implements OnInit {
-  messages: NostrEvent[] = [];
-  newMessageContent: string = '';
-  nostrPubKey: string = '';
-  founderMetadata: any = null;
-  errorMessage: string = '';
+  public recipientPublicKey: string = '';
+  public message: string = '';
+  public receivedMessages: string[] = [];
+
+  private decryptedSenderPrivateKey: string = '';
 
   constructor(
-    private route: ActivatedRoute,
     private nostrService: NostrService,
-    private messageService: MessageService
+    private route: ActivatedRoute
   ) {}
 
-  ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      this.nostrPubKey = params.get('pubkey') || '';
-      if (this.nostrPubKey) {
-        this.loadFounderMetadata(this.nostrPubKey);
-       } else {
-        this.errorMessage = 'No public key provided. Unable to load messages.';
+  async ngOnInit(): Promise<void> {
+    try {
+      await this.initializeKeys();
+       this.route.paramMap.subscribe((params) => {
+        this.recipientPublicKey = params.get('pubkey') || '';
+   console.log(this.recipientPublicKey);
+      });
+      if (this.recipientPublicKey) {
+        this.subscribeToMessages();
+      } else {
+        console.error('Recipient public key is not set.');
       }
+    } catch (error) {
+      console.error('Error during initialization:', error);
+    }
+  }
+
+  private async initializeKeys(): Promise<void> {
+    const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
+    const password = '1'; // Replace with actual password retrieval method
+
+    if (encryptedSenderPrivateKey) {
+      this.decryptedSenderPrivateKey = await this.nostrService.decryptPrivateKeyWithPassword(encryptedSenderPrivateKey, password);
+      console.log('Decrypted Sender Private Key:', this.decryptedSenderPrivateKey);
+    } else {
+      throw new Error('Encrypted sender private key not found in local storage.');
+    }
+  }
+
+
+
+  public async sendMessage(): Promise<void> {
+    if (!this.isValidMessageSetup()) {
+      console.error('Message, sender private key, or recipient public key is not properly set.');
+      return;
+    }
+
+    try {
+      const encryptedMessage = await this.nostrService.encryptMessage(
+        this.decryptedSenderPrivateKey,
+        this.recipientPublicKey,
+        this.message
+      );
+
+      const tags = [['p', this.recipientPublicKey]];
+      const pubkey = this.nostrService.getUserPublicKey()!;
+
+      const signedEvent = await this.signMessageEvent(encryptedMessage, tags, pubkey);
+      console.log('Event:', signedEvent);
+
+       if (await this.nostrService.publishEventToRelays(signedEvent)) {
+        console.log('Message sent successfully!');
+        this.message = '';
+      } else {
+        console.error('Failed to send the message.');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }
+
+
+  private async signMessageEvent(
+    encryptedMessage: string,
+    tags: string[][],
+    pubkey: string
+  ): Promise<NostrEvent> {
+    const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
+    const password = '1'; // Replace with actual password retrieval method
+
+    if (!encryptedSenderPrivateKey) {
+      throw new Error('Encrypted sender private key not found in local storage.');
+    }
+
+    return this.nostrService.signEvent(encryptedMessage, 4, {
+      encryptedPrivateKey: encryptedSenderPrivateKey,
+      password: password,
+      useExtension: false,
+      tags: tags,
+      pubkey: pubkey,
     });
   }
 
-  private async loadFounderMetadata(pubkey: string): Promise<void> {
+  private subscribeToMessages(): void {
+    this.nostrService.getKind4MessagesToMe().then(events => {
+      events.forEach(async (event: NostrEvent) => {
+        if (this.isMessageForRecipient(event)) {
+          const decryptedMessage = await this.decryptReceivedMessage(event);
+          this.receivedMessages.push(decryptedMessage);
+        }
+      });
+    }).catch(error => {
+      console.error('Error subscribing to messages:', error);
+    });
+  }
+
+
+  private async decryptReceivedMessage(event: NostrEvent): Promise<string> {
     try {
-      this.founderMetadata = await this.nostrService.fetchMetadata(pubkey);
-      if (!this.founderMetadata) {
-        this.errorMessage = 'No metadata found for the provided public key.';
-      }
+      const [encryptedMessage, ivBase64] = event.content.split('?iv=');
+      return await this.nostrService.decryptMessage(
+        this.decryptedSenderPrivateKey,
+
+        event.pubkey,
+        encryptedMessage,
+
+      );
     } catch (error) {
-      console.error('Error fetching founder metadata:', error);
-      this.errorMessage = 'Error fetching founder metadata.';
+      console.error('Error decrypting message:', error);
+      return 'Failed to decrypt message.';
     }
   }
 
 
-  sendMessage(): void {
-    if (!this.newMessageContent.trim()) {
-      return; // Do nothing if the message content is empty
-    }
-
-    const signingOptions = this.getSigningOptions();
-
- 
+  private isValidMessageSetup(): boolean {
+    return this.message.trim() !== '' && this.decryptedSenderPrivateKey !== '' && this.recipientPublicKey !== '';
   }
 
-  private getSigningOptions() {
-    const encryptedPrivateKey = localStorage.getItem('nostrSecretKey');
-    const password = prompt('Enter your password:');
-
-    return {
-      encryptedPrivateKey: encryptedPrivateKey,
-      password: password,
-      useExtension: false // Adjust this based on your logic to use extension or not
-    };
+  private isMessageForRecipient(event: NostrEvent): boolean {
+    return event.kind === 4 && event.pubkey === this.recipientPublicKey;
   }
 }

@@ -40,7 +40,10 @@ export class EditProfileComponent implements OnInit {
     });
     const kind = 0;
 
-    this.signAndHandleEvent(content, kind, (signedEvent) => {
+     const tags: string[][] = [];
+    const pubkey = '';
+
+    this.signAndHandleEvent(content, kind, tags, pubkey, (signedEvent) => {
       this.nostrService.publishEventToRelays(signedEvent)
         .then(() => {
           this.router.navigate(['/profile'], { replaceUrl: true });
@@ -49,9 +52,12 @@ export class EditProfileComponent implements OnInit {
     });
   }
 
+
   private signAndHandleEvent(
     content: string,
     kind: number,
+    tags: string[][],
+    pubkey: string,
     callback: (signedEvent: NostrEvent) => void
   ): void {
     const publicKey = localStorage.getItem('nostrPublicKey');
@@ -65,15 +71,23 @@ export class EditProfileComponent implements OnInit {
 
       dialogRef.afterClosed().subscribe((password) => {
         if (password) {
+          const options = {
+            encryptedPrivateKey: encryptedPrivateKey,
+            password: password,
+            useExtension: false,
+            tags: tags,
+            pubkey: pubkey,
+          };
+
           this.nostrService
-            .signEventWithPassword(content, encryptedPrivateKey, password, kind)
+            .signEvent(content, kind, options)
             .then(callback)
             .catch((error) => this.handleError(error, 'Error signing event.'));
         }
       });
     } else if (publicKey) {
       this.nostrService
-        .signEventWithExtension(content, kind)
+        .signEventWithExtension(content, kind, tags, pubkey)
         .then(callback)
         .catch((error) => this.handleError(error, 'Error signing event with extension.'));
     } else {

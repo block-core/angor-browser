@@ -32,6 +32,8 @@ export class PrivatekeyComponent {
         throw new Error('Password is required.');
       }
 
+      console.log(this.privateKey);
+
       const encrypted = await this.security.encryptData(this.privateKeyHex, this.password);
       const decrypted = await this.security.decryptData(encrypted, this.password);
 

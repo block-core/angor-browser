@@ -71,7 +71,7 @@ export class NewComponent implements OnInit {
         pubkey: this.publicKey,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: JSON.stringify({
+         content: JSON.stringify({
           name: this.name,
           about: this.about,
         }),
@@ -83,9 +83,11 @@ export class NewComponent implements OnInit {
         encryptedPrivateKey: this.encryptedSecretKey,
         password: this.password,
         useExtension: false,
+        tags: metadata.tags,
+        pubkey: this.publicKey,
       };
 
-       const signedMetadata = await this.nostrService.signEvent(metadata.content, 0 ,options);
+       const signedMetadata = await this.nostrService.signEvent(metadata.content, 0, options);
 
        await this.nostrService.publishEventToRelays(signedMetadata);
     } catch (error) {
@@ -93,4 +95,5 @@ export class NewComponent implements OnInit {
       throw new Error('Failed to update metadata.');
     }
   }
+
 }
