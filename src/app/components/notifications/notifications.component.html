@@ -11,6 +11,12 @@
 
         </header>
         <div class="e-content article-entry" itemprop="articleBody">
+          <div class="notification-list">
+            <div *ngFor="let notification of notifications" class="notification-item">
+              <p><strong>{{ notification.pubkey }}</strong> mentioned you:</p>
+              <p>{{ notification.content }}</p>
+            </div>
+          </div>
 
         </div>
       </div>

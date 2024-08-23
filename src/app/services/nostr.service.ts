@@ -24,6 +24,7 @@ export class NostrService {
   private publicKey: string;
   private eventSubject = new Subject<NostrEvent>();
   private nostrExtension: any;
+  private notificationSubject = new Subject<NostrEvent>();
 
   nostrPublicKey = '';
   nostrSignedEvent = '';
@@ -499,8 +500,35 @@ export class NostrService {
     });
   }
 
- 
 
+  // Subscribe to notification events
+  subscribeToNotifications(pubkey: string): void {
+    this.relayService.ensureConnectedRelays().then(() => {
+      // Define a filter for notifications
+      const filter: Filter = {
+        kinds: [1, 4], // Kind 1 for text notes, kind 4 for encrypted direct messages
+        '#p': [pubkey], // Events tagged with the user's public key
+      };
+
+      this.relayService.subscribeToFilter(filter);
+
+      this.relayService.getEventStream().subscribe((event) => {
+        if (this.isNotificationEvent(event, pubkey)) {
+          this.notificationSubject.next(event);
+        }
+      });
+    });
+  }
+
+  // Check if the event is a notification for the user
+  private isNotificationEvent(event: NostrEvent, pubkey: string): boolean {
+    return event.tags.some(tag => tag[0] === 'p' && tag[1] === pubkey);
+  }
+
+  // Get the notification event stream
+  getNotificationStream() {
+    return this.notificationSubject.asObservable();
+  }
   getEventStream() {
     return this.relayService.getEventStream();
   }
