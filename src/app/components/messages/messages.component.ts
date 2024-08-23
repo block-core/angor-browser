@@ -13,10 +13,13 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
 export class MessagesComponent implements OnInit {
   public recipientPublicKey: string = '';
   public message: string = '';
-  public receivedMessages: string[] = [];
 
+  public messages: Map<string, string[]> = new Map();
+  public selectedContactMessages: string[] = [];
+  public contacts: string[] = [];
   private decryptedSenderPrivateKey: string = '';
-
+  public isEmojiPickerVisible = false;
+  public customEmojis: string[] = ['😀', '😁', '😂', '🥰', '😎', '🤩', '😢', '😡', '👍', '👎', '🙏', '👏', '❤️', '💔', '🎉', '🔥', '🌟', '🍀', '🎁', '⚽'];
   constructor(
     private nostrService: NostrService,
     private route: ActivatedRoute,
@@ -25,20 +28,62 @@ export class MessagesComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      await this.initializeKeys();
-      this.route.paramMap.subscribe((params) => {
-        this.recipientPublicKey = params.get('pubkey') || '';
-        console.log(this.recipientPublicKey);
-      });
-      if (this.recipientPublicKey) {
-        this.subscribeToMessages();
-      } else {
-        console.error('Recipient public key is not set.');
-      }
+        await this.initializeKeys();
+        this.route.paramMap.subscribe((params) => {
+            this.recipientPublicKey = params.get('pubkey') || '';
+            console.log(this.recipientPublicKey);
+        });
+
+        if (this.recipientPublicKey) {
+            await this.subscribeToMessagesAndContacts();
+        } else {
+            console.error('Recipient public key is not set.');
+        }
     } catch (error) {
-      console.error('Error during initialization:', error);
+        console.error('Error during initialization:', error);
     }
+}
+onSelectContact(contactPubkey: string): void {
+  this.recipientPublicKey = contactPubkey;
+  this.selectedContactMessages = this.messages.get(contactPubkey) || [];
+}
+public toggleEmojiPicker(): void {
+  this.isEmojiPickerVisible = !this.isEmojiPickerVisible;
+}
+
+public addEmoji(emoji: string): void {
+  this.message += emoji;
+  this.isEmojiPickerVisible = false;
+}
+private async subscribeToMessagesAndContacts(): Promise<void> {
+  try {
+      const pubkey = this.recipientPublicKey;
+      let useExtension = true;
+      const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
+
+      if (encryptedSenderPrivateKey) {
+           useExtension = false;
+      }
+      const decryptedSenderPrivateKey = this.decryptedSenderPrivateKey;
+      const publicKey = localStorage.getItem('nostrPublicKey');
+
+       this.nostrService.fetchAndSubscribeToMessages(publicKey! ,this.recipientPublicKey, useExtension, decryptedSenderPrivateKey);
+
+       this.nostrService.getMessageUpdates().subscribe(({ contactPubkey, decryptedMessage }) => {
+          if (!this.messages.has(contactPubkey)) {
+              this.messages.set(contactPubkey, []);
+              this.contacts.push(contactPubkey);
+          }
+          this.messages.get(contactPubkey)?.push(decryptedMessage);
+
+           if (contactPubkey === this.recipientPublicKey) {
+              this.selectedContactMessages = this.messages.get(contactPubkey) || [];
+          }
+      });
+  } catch (error) {
+      console.error('Error subscribing to messages and contacts:', error);
   }
+}
 
   private async initializeKeys(): Promise<void> {
     const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
@@ -200,39 +245,14 @@ private async signMessageEventWithExtension(
 }
 
 
+public isSentByUser(msg: string): boolean {
+   return msg.startsWith('Me: ');
+}
 
-  private subscribeToMessages(): void {
-    this.nostrService.getKind4MessagesToMe().then(events => {
-      events.forEach(async (event: NostrEvent) => {
-        if (this.isMessageForRecipient(event)) {
-          const decryptedMessage = await this.decryptReceivedMessage(event);
-          this.receivedMessages.push(decryptedMessage);
-        }
-      });
-    }).catch(error => {
-      console.error('Error subscribing to messages:', error);
-    });
-  }
 
-  private async decryptReceivedMessage(event: NostrEvent): Promise<string> {
-    try {
-      const [encryptedMessage, ivBase64] = event.content.split('?iv=');
-      return await this.nostrService.decryptMessage(
-        this.decryptedSenderPrivateKey,
-        event.pubkey,
-        encryptedMessage,
-      );
-    } catch (error) {
-      console.error('Error decrypting message:', error);
-      return 'Failed to decrypt message.';
-    }
-  }
 
   private isValidMessageSetup(): boolean {
     return this.message.trim() !== '' && this.decryptedSenderPrivateKey !== '' && this.recipientPublicKey !== '';
   }
 
-  private isMessageForRecipient(event: NostrEvent): boolean {
-    return event.kind === 4 && event.pubkey === this.recipientPublicKey;
-  }
 }

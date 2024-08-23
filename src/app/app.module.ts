@@ -34,8 +34,7 @@ import { PasswordDialogComponent } from './components/password-dialog/password-d
  import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
-import { CustomEmojiPickerComponent } from './components/custom-emoji-picker/custom-emoji-picker.component';
- @NgModule({
+  @NgModule({
   declarations: [
     AppComponent,
     ProfileComponent,
@@ -56,8 +55,8 @@ import { CustomEmojiPickerComponent } from './components/custom-emoji-picker/cus
     MenemonicComponent,
     PrivatekeyComponent,
     PasswordDialogComponent,
-    EditProfileComponent,
-    CustomEmojiPickerComponent
+    EditProfileComponent
+
   ],
   imports: [
     BrowserModule,
