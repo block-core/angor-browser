@@ -65,8 +65,8 @@ export class EditProfileComponent implements OnInit {
 
     if (publicKey && encryptedPrivateKey) {
       const dialogRef = this.dialog.open(PasswordDialogComponent, {
-        width: '250px',
-        data: { message: 'Please enter your password to sign the event' },
+        width: '360px',
+        data: { message: 'Please enter password' },
       });
 
       dialogRef.afterClosed().subscribe((password) => {

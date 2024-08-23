@@ -16,7 +16,6 @@ export class MessagesComponent implements OnInit {
   public receivedMessages: string[] = [];
 
   private decryptedSenderPrivateKey: string = '';
-  private dialogRef: any;
 
   constructor(
     private nostrService: NostrService,
@@ -27,9 +26,9 @@ export class MessagesComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       await this.initializeKeys();
-       this.route.paramMap.subscribe((params) => {
+      this.route.paramMap.subscribe((params) => {
         this.recipientPublicKey = params.get('pubkey') || '';
-   console.log(this.recipientPublicKey);
+        console.log(this.recipientPublicKey);
       });
       if (this.recipientPublicKey) {
         this.subscribeToMessages();
@@ -45,25 +44,27 @@ export class MessagesComponent implements OnInit {
     const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
     const publicKey = localStorage.getItem('nostrPublicKey');
 
-     if (encryptedSenderPrivateKey) {
-      this.dialogRef = this.dialog.open(PasswordDialogComponent, {
-        width: '350px',
-        data: { message: 'Please enter your password to decrypt the private key' },
-      });
+    if (encryptedSenderPrivateKey) {
+      try {
+        const dialogRef = this.dialog.open(PasswordDialogComponent, {
+          width: '360px',
+          data: { message: 'Please enter password' },
+        });
 
-      const password = await this.dialogRef.afterClosed().toPromise();
+        const password = await dialogRef.afterClosed().toPromise();
 
-      if (password) {
-        this.decryptedSenderPrivateKey = await this.nostrService.decryptPrivateKeyWithPassword(encryptedSenderPrivateKey, password);
-        console.log('Decrypted Sender Private Key:', this.decryptedSenderPrivateKey);
-      } else {
-        throw new Error('Password was not provided.');
+        if (password) {
+          this.decryptedSenderPrivateKey = await this.nostrService.decryptPrivateKeyWithPassword(encryptedSenderPrivateKey, password);
+          console.log('Decrypted Sender Private Key:', this.decryptedSenderPrivateKey);
+        } else {
+          console.warn('Password was not provided.');
+        }
+      } catch (error) {
+        console.error('Error decrypting private key:', error);
       }
-    }
-    else if (publicKey){
-    //TODO
-    }
-     else {
+    } else if (publicKey) {
+      // Handle other cases (e.g., if public key is present but private key is not)
+    } else {
       throw new Error('Encrypted sender private key not found in local storage.');
     }
   }
@@ -87,7 +88,7 @@ export class MessagesComponent implements OnInit {
       const signedEvent = await this.signMessageEvent(encryptedMessage, tags, pubkey);
       console.log('Event:', signedEvent);
 
-       if (await this.nostrService.publishEventToRelays(signedEvent)) {
+      if (await this.nostrService.publishEventToRelays(signedEvent)) {
         console.log('Message sent successfully!');
         this.message = '';
       } else {
@@ -109,23 +110,29 @@ export class MessagesComponent implements OnInit {
       throw new Error('Encrypted sender private key not found in local storage.');
     }
 
-    this.dialogRef = this.dialog.open(PasswordDialogComponent, {
-      width: '350px',
-      data: { message: 'Please enter your password to sign the event' },
-    });
-
-    const password = await this.dialogRef.afterClosed().toPromise();
-
-    if (password) {
-      return this.nostrService.signEvent(encryptedMessage, 4, {
-        encryptedPrivateKey: encryptedSenderPrivateKey,
-        password: password,
-        useExtension: false,
-        tags: tags,
-        pubkey: pubkey,
+    try {
+      const dialogRef = this.dialog.open(PasswordDialogComponent, {
+        width: '360px',
+        data: { message: 'Please enter password' },
       });
-    } else {
-      throw new Error('Password was not provided.');
+
+      const password = await dialogRef.afterClosed().toPromise();
+
+      if (password) {
+        return this.nostrService.signEvent(encryptedMessage, 4, {
+          encryptedPrivateKey: encryptedSenderPrivateKey,
+          password: password,
+          useExtension: false,
+          tags: tags,
+          pubkey: pubkey,
+        });
+      } else {
+        console.warn('Password was not provided.');
+        throw new Error('Password was not provided.');
+      }
+    } catch (error) {
+      console.error('Error signing event:', error);
+      throw error;
     }
   }
 

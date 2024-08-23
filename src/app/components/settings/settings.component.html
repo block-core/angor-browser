@@ -168,12 +168,13 @@
 
       <div class="add-relay-section">
         <input [(ngModel)]="newRelayUrl" placeholder="New Relay URL" type="text" class="relay-input" />
-        <div class="btns">
-          <button class="btn-angor"(click)="addRelay()">Add Relay</button>
-          <button class="btn-angor" (click)="connectRelays()">{{ connectButtonText }}</button>
-        </div>
+        <button class="btn-angor" (click)="addRelay()">Add</button>
       </div>
-<br />
+
+      <div class="btns">
+        <button class="btn-angor" (click)="connectRelays()">{{ connectButtonText }}</button>
+      </div>
+
       <div class="relay-main-card">
         <span class="relay-section-link" *ngFor="let relay of relays">
           <a id="theme-btn" class="nav-icon" (click)="toggleRelayStatus(relay)">

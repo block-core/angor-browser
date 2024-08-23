@@ -24,13 +24,14 @@
   margin-bottom: 10px;
 }
 
-.add-indexer-section {
+.add-indexer-section,
+.add-relay-section {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.indexer-input {
+.indexer-input ,.relay-input {
   flex-grow: 1;
   padding: 8px 12px;
   background-color: var(--input-background);
@@ -98,9 +99,9 @@
   color: var(--text-color);
 }
 
-
-
-
+.relay-main-card{
+  margin-top: 50px;
+}
 
 .section-header {
   display: flex;
@@ -199,7 +200,7 @@
 }
 .btns{
   margin-top: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .add-relay-section

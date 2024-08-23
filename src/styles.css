@@ -1,5 +1,3 @@
-@import 'overlayscrollbars/styles/overlayscrollbars.css';
-
 input[type="text"],
 input[type="password"],
 textarea {
@@ -51,42 +49,15 @@ path {
   padding: 20px;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-
-.auth-button, .action-button {
-  background: none;
-  border: 0;
-  margin: 15px 0;
-  color: var(--btn-text-content);
-  height: 52px;
-  border-radius: 8px;
-  -webkit-box-align: center;
-  -moz-box-align: center;
-  -ms-flex-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  padding: 0 10px;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: box;
-  display: flex;
-  font-size: 16px;
-  font-weight: bold;
-  -webkit-transition: background 0.15s ease-out;
-  -moz-transition: background 0.15s ease-out;
-  -ms-transition: background 0.15s ease-out;
-  transition: background 0.15s ease-out;
+html, body {
+  height: 100%;
 }
 
-.auth-button:hover, .action-button:hover {
-  background: var(--btn-text-hover);
-}
-
-.auth-button:active, .action-button:active {
-  background: var(--btn-text-active);
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overflow-y: scroll;
+  padding-right: 8px;
 }
 
 body::-webkit-scrollbar {
@@ -103,25 +74,48 @@ body.idle::-webkit-scrollbar-thumb {
   background-color: transparent;
 }
 
-body {
-  overflow-y: scroll;
-  padding-right: 8px;
-}
-
 body.idle {
   padding-right: 8px;
 }
-.form-group
-{
+
+.auth-button,
+.action-button {
+  background: none;
+  border: 0;
+  margin: 15px 0;
+  color: var(--btn-text-content);
+  height: 52px;
+  border-radius: 8px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.15s ease-out;
+}
+
+.auth-button:hover,
+.action-button:hover {
+  background: var(--btn-text-hover);
+}
+
+.auth-button:active,
+.action-button:active {
+  background: var(--btn-text-active);
+}
+
+.form-group {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
 .btn-angor {
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
 }
+
 button {
   all: unset;
   display: inline-block;
@@ -129,4 +123,12 @@ button {
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
+}
+
+.mat-mdc-dialog-surface {
+  background: var(--card-background) !important;
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-title {
+  color: var(--neut-L75) !important;
 }
