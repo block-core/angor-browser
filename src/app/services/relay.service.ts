@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { SimplePool } from 'nostr-tools';
-import { Subject } from 'rxjs';
+import { Filter, NostrEvent, SimplePool } from 'nostr-tools';
+import { Observable, Subject } from 'rxjs';
 import WebSocket from '@blockcore/ws';
 
 @Injectable({
@@ -122,10 +122,19 @@ export class RelayService {
     // Optionally, disconnect from any removed custom relays
   }
 
-  public getEventStream() {
+ 
+  public getEventStream(): Observable<NostrEvent> {
     return this.eventSubject.asObservable();
   }
 
+  public subscribeToFilter(filter: Filter): void {
+    const connectedRelays = this.getConnectedRelays();
+    const sub = this.pool.subscribeMany(connectedRelays, [filter], {
+      onevent: (event: NostrEvent) => {
+        this.eventSubject.next(event);
+      },
+    });
+  }
   public getRelays(): { url: string, connected: boolean }[] {
     return this.relays;
   }

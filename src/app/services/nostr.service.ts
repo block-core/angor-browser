@@ -477,6 +477,34 @@ export class NostrService {
     });
   }
 
+
+  subscribeToMyEventsAndFollowing(pubkey: string): void {
+    this.relayService.ensureConnectedRelays().then(() => {
+      const filter: Filter = {
+        kinds: [1], // Kind 1 represents text notes
+        authors: [pubkey],
+      };
+
+      this.relayService.subscribeToFilter(filter);
+
+      // Subscribe to the events of the people you follow
+      this.getFollowing(pubkey).then((following) => {
+        const followingPubkeys = following.map((f) => f.nostrPubKey);
+        const followingFilter: Filter = {
+          kinds: [1],
+          authors: followingPubkeys,
+        };
+        this.relayService.subscribeToFilter(followingFilter);
+      });
+    });
+  }
+
+ 
+
+  getEventStream() {
+    return this.relayService.getEventStream();
+  }
+
   // Nostr Extension Interactions
   async getNostrPublicKeyFromExtension() {
     const gt = globalThis as any;

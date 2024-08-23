@@ -32,3 +32,24 @@
     flex: 1 1 calc(25% - 10px);
   }
 }
+.event-list {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.event-item {
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.event-item p {
+  margin: 0 0 10px;
+}
+
+hr {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #eee;
+}
