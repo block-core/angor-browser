@@ -5,25 +5,26 @@
         <div class="main-title-bar">
           <div class="main-title-dot"></div>
           <h1 itemprop="name">
-            <span class="section-title">Send a Message</span>
+            <span class="section-title">{{ recipientPublicKey }}</span>
           </h1>
         </div>
 
       </header>
       <div class="e-content article-entry" itemprop="articleBody">
-        <div class="message-container">
-           <textarea [(ngModel)]="message" placeholder="Type your message here"></textarea>
-          <button (click)="sendMessage()">Send</button>
-
-          <h2>Received Messages</h2>
-          <ul>
-            <li *ngFor="let msg of receivedMessages">{{ msg }}</li>
-          </ul>
-        </div>
+        <section id="chat-section" class="chat-container h-entry">
+          <div class="chat-messages">
+            <ul>
+              <li *ngFor="let msg of receivedMessages" class="received-message">{{ msg }}</li>
+            </ul>
+          </div>
+          <div class="chat-input">
+            <textarea [(ngModel)]="message" placeholder="Type your message here"></textarea>
+            <button class="btn-angor" (click)="sendMessage()">Send</button>
+          </div>
+        </section>
 
       </div>
     </div>
   </div>
 </section>
-
 

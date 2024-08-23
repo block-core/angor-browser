@@ -21,7 +21,7 @@ export class MessagesComponent implements OnInit {
     private nostrService: NostrService,
     private route: ActivatedRoute,
     private dialog: MatDialog
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -70,71 +70,136 @@ export class MessagesComponent implements OnInit {
   }
 
   public async sendMessage(): Promise<void> {
+    try {
+        const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
+        const publicKey = localStorage.getItem('nostrPublicKey');
+
+        if (encryptedSenderPrivateKey) {
+            await this.handleMessageSendingWithPrivateKey(encryptedSenderPrivateKey);
+        } else if (publicKey) {
+            await this.handleMessageSendingWithExtension();
+        } else {
+            console.error('No valid sender credentials found.');
+        }
+    } catch (error) {
+        console.error('Error in sendMessage:', error);
+    }
+}
+
+private async handleMessageSendingWithPrivateKey(encryptedSenderPrivateKey: string): Promise<void> {
     if (!this.isValidMessageSetup()) {
-      console.error('Message, sender private key, or recipient public key is not properly set.');
-      return;
+        console.error('Message, sender private key, or recipient public key is not properly set.');
+        return;
     }
 
     try {
-      const encryptedMessage = await this.nostrService.encryptMessage(
-        this.decryptedSenderPrivateKey,
-        this.recipientPublicKey,
-        this.message
-      );
+        const encryptedMessage = await this.nostrService.encryptMessage(
+            this.decryptedSenderPrivateKey,
+            this.recipientPublicKey,
+            this.message
+        );
 
-      const tags = [['p', this.recipientPublicKey]];
-      const pubkey = this.nostrService.getUserPublicKey()!;
+        const signedEvent = await this.signMessageEvent(
+            encryptedMessage,
+            [['p', this.recipientPublicKey]],
+            this.nostrService.getUserPublicKey()!
+        );
 
-      const signedEvent = await this.signMessageEvent(encryptedMessage, tags, pubkey);
-      console.log('Event:', signedEvent);
+        await this.publishSignedEvent(signedEvent);
+    } catch (error) {
+        console.error('Error sending message with private key:', error);
+    }
+}
 
-      if (await this.nostrService.publishEventToRelays(signedEvent)) {
+private async handleMessageSendingWithExtension(): Promise<void> {
+    try {
+        const encryptedMessage = await this.nostrService.encryptMessageWithExtension(
+            this.message,
+            this.recipientPublicKey
+        );
+
+        const signedEvent = await this.signMessageEventWithExtension(
+            encryptedMessage,
+            [['p', this.recipientPublicKey]],
+            this.nostrService.getUserPublicKey()!
+        );
+
+        await this.publishSignedEvent(signedEvent);
+    } catch (error) {
+        console.error('Error sending message with extension:', error);
+    }
+}
+
+private async publishSignedEvent(signedEvent: NostrEvent): Promise<void> {
+    if (await this.nostrService.publishEventToRelays(signedEvent)) {
         console.log('Message sent successfully!');
         this.message = '';
-      } else {
+    } else {
         console.error('Failed to send the message.');
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
     }
-  }
+}
 
-  private async signMessageEvent(
+private async signMessageEvent(
     encryptedMessage: string,
     tags: string[][],
     pubkey: string
-  ): Promise<NostrEvent> {
+): Promise<NostrEvent> {
     const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
-
     if (!encryptedSenderPrivateKey) {
-      throw new Error('Encrypted sender private key not found in local storage.');
+        throw new Error('Encrypted sender private key not found in local storage.');
     }
 
     try {
-      const dialogRef = this.dialog.open(PasswordDialogComponent, {
+        const password = await this.promptForPassword();
+        return this.nostrService.signEvent(encryptedMessage, 4, {
+            encryptedPrivateKey: encryptedSenderPrivateKey,
+            password: password,
+            useExtension: false,
+            tags: tags,
+            pubkey: pubkey,
+        });
+    } catch (error) {
+        console.error('Error signing event:', error);
+        throw error;
+    }
+}
+
+private async promptForPassword(): Promise<string> {
+    const dialogRef = this.dialog.open(PasswordDialogComponent, {
         width: '360px',
         data: { message: 'Please enter password' },
-      });
+    });
 
-      const password = await dialogRef.afterClosed().toPromise();
+    const password = await dialogRef.afterClosed().toPromise();
 
-      if (password) {
-        return this.nostrService.signEvent(encryptedMessage, 4, {
-          encryptedPrivateKey: encryptedSenderPrivateKey,
-          password: password,
-          useExtension: false,
-          tags: tags,
-          pubkey: pubkey,
-        });
-      } else {
+    if (!password) {
         console.warn('Password was not provided.');
         throw new Error('Password was not provided.');
-      }
-    } catch (error) {
-      console.error('Error signing event:', error);
-      throw error;
     }
-  }
+
+    return password;
+}
+
+private async signMessageEventWithExtension(
+    encryptedMessage: string,
+    tags: string[][],
+    pubkey: string
+): Promise<NostrEvent> {
+    try {
+        return this.nostrService.signEvent(encryptedMessage, 4, {
+            encryptedPrivateKey: "",
+            password: "",
+            useExtension: true,
+            tags: tags,
+            pubkey: pubkey,
+        });
+    } catch (error) {
+        console.error('Error signing event with extension:', error);
+        throw error;
+    }
+}
+
+
 
   private subscribeToMessages(): void {
     this.nostrService.getKind4MessagesToMe().then(events => {
