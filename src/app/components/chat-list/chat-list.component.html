@@ -1,0 +1,32 @@
+<section id="page-chat" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Chat List</span>
+          </h1>
+        </div>
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        <div class="chat-list-container project-results">
+          <ul class="chat-list">
+            <li *ngFor="let chat of chatList" (click)="goToChat(chat.pubKey)" class="chat-item project-card">
+              <div class="chat-avatar">
+                <img [src]="chat.metadata?.picture || 'assets/images/no-image.jpg'"
+                     onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
+                     alt="{{ chat.metadata?.name || chat.pubKey }}">
+              </div>
+              <div class="chat-info">
+                <strong class="chat-name">{{ chat.metadata?.name || chat.pubKey }}</strong>
+                <p class="chat-message">{{ chat.lastMessage }}</p>
+                <span class="chat-time">{{ chat.lastMessageTime | date:'short' }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

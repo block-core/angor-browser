@@ -11,6 +11,7 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(87, 87, 87, 0.7);
 }
+
 .chat-container {
   display: flex;
   height: calc(100vh - 250px); /* 100vh minus header height */
@@ -143,6 +144,7 @@
   margin: 5px;
   font-size: 20px;
 }
+
 .chat-messages ul {
   list-style-type: none;
   padding: 0;
@@ -196,7 +198,7 @@
   margin: 5px;
 }
 
-/* Styles for right and left alignment */
+
 .right {
   float: right;
   clear: both;
@@ -205,4 +207,52 @@
 .left {
   float: left;
   clear: both;
+}
+
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--text-color);
+  margin-bottom: 20px;
+}
+
+.section-header .main-title-bar {
+  display: flex;
+  align-items: center;
+}
+
+.section-header .main-title-dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.section-header h1 {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.section-header .section-title {
+  display: inline-block;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  font-size: 1.5em;
+  color: var(--text-color);
+}
+
+ .recipient-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 2px solid var(--primary);
+  object-fit: cover; /* Ensure the image covers the container */
 }

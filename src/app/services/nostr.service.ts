@@ -15,6 +15,7 @@ import { nip04 } from 'nostr-tools';
 import { getSharedSecret } from '@noble/secp256k1';
 import { SecurityService } from './security.service';
 import { distinctUntilChanged, filter, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 
 interface CustomMessageEvent {
@@ -32,8 +33,22 @@ export class NostrService {
   private eventSubject = new Subject<NostrEvent>();
    private notificationSubject = new Subject<NostrEvent>();
   private messageSubject = new Subject<CustomMessageEvent>();
+   private groupedMessages: { [pubKey: string]: CustomMessageEvent[] } = {};
 
-  nostrPublicKey = '';
+   private chatList: {
+    pubKey: string;
+    lastMessage: string;
+    lastMessageTime: number;
+    metadata?: any;
+  }[] = [];
+
+  private chatListSubject = new BehaviorSubject<{
+    pubKey: string;
+    lastMessage: string;
+    lastMessageTime: number;
+    metadata?: any;
+  }[]>(this.chatList);
+      nostrPublicKey = '';
   nostrSignedEvent = '';
   nostrRelays?: string[];
 
@@ -573,54 +588,55 @@ export class NostrService {
   }
 
 
-  async fetchAndSubscribeToMessages(
+  subscribeToKind4Messages(
     pubkey: string,
     recipientPublicKey: string,
     useExtension: boolean,
     decryptedSenderPrivateKey: string
-): Promise<void> {
-    await this.ensureRelaysConnected();
+  ): void {
+    this.relayService.ensureConnectedRelays().then(() => {
+      const filters: Filter[] = [
+        {
+          kinds: [4],
+          authors: [pubkey],
+          '#p': [recipientPublicKey]
+        },
+        {
+          kinds: [4],
+          authors: [recipientPublicKey],
+          '#p': [pubkey]
+        }
+      ];
 
-    const filters = [
-      {
-        kinds: [4],
-        authors: [pubkey],
-        '#p': [recipientPublicKey]
-      },
-      {
-        kinds: [4],
-        authors: [recipientPublicKey],
-        '#p': [pubkey]
-      }
-    ];
-
-    const sub = this.relayService.getPool().subscribeMany(
-      this.relayService.getConnectedRelays(),
-      filters,
-      {
+      this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
         onevent: async (event: NostrEvent) => {
-           const isSentByUser = event.pubkey === pubkey;
+          const isSentByUser = event.pubkey === pubkey;
 
-           const decryptedMessage = await this.decryptReceivedMessage(
+          const decryptedMessage = await this.decryptReceivedMessage(
             event,
             useExtension,
             decryptedSenderPrivateKey,
             recipientPublicKey
           );
 
-          this.messageSubject.next({
+          const customMessage: CustomMessageEvent = {
             isSentByUser,
             decryptedMessage,
             createdAt: event.created_at,
-          });
+          };
+
+           this.messageSubject.next(customMessage);
         },
         oneose: () => {
-          sub.close();
-        },
-      }
-    );
-}
+          console.log('Subscription closed');
+        }
+      });
+    });
+  }
 
+   getMessageStream() {
+    return this.messageSubject.asObservable();
+  }
 
 
   async decryptReceivedMessage(
@@ -647,17 +663,91 @@ export class NostrService {
 }
 
 
+subscribeToChatList(
+  pubkey: string,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string
+): void {
+  this.relayService.ensureConnectedRelays().then(() => {
 
+    const filters: Filter[] = [
+      {
+        kinds: [4],
+        authors: [pubkey],
+      },
+      {
+        kinds: [4],
+        '#p': [pubkey]
+      }
+    ];
 
-  getMessageUpdates() {
-    return this.messageSubject.asObservable().pipe(
-      filter((message) => message.decryptedMessage !== 'Failed to decrypt message.'),
+    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
+      onevent: async (event: NostrEvent) => {
+        const isSentByUser = event.pubkey === pubkey;
+        const otherPartyPubKey = isSentByUser
+          ? event.tags.find(tag => tag[0] === 'p')?.[1] || ''
+          : event.pubkey;
 
-      distinctUntilChanged((prev, curr) => prev.createdAt === curr.createdAt)
+        if (!otherPartyPubKey) {
+          return;
+        }
 
-    );
+        try {
+          const decryptedMessage = await this.decryptReceivedMessage(
+            event,
+            useExtension,
+            decryptedSenderPrivateKey,
+            otherPartyPubKey
+          );
+
+          if (decryptedMessage) {
+            const messageTimestamp = event.created_at * 1000;
+            this.addOrUpdateChatList(otherPartyPubKey, decryptedMessage, messageTimestamp);
+          }
+        } catch (error) {
+          console.error('Failed to decrypt message:', error);
+        }
+      },
+      oneose: () => {
+        console.log('Subscription closed');
+        this.chatListSubject.next(this.chatList);
+      }
+    });
+  });
+}
+
+private addOrUpdateChatList(pubKey: string, message: string, createdAt: number): void {
+  const existingItem = this.chatList.find(item => item.pubKey === pubKey);
+
+  if (existingItem) {
+    if (existingItem.lastMessageTime < createdAt) {
+      existingItem.lastMessage = message;
+      existingItem.lastMessageTime = createdAt;
+    }
+  } else {
+    this.chatList.push({ pubKey, lastMessage: message, lastMessageTime: createdAt });
+    this.fetchMetadataForPubKey(pubKey);
   }
 
+  this.chatList.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+}
+
+private fetchMetadataForPubKey(pubKey: string): void {
+  this.fetchMetadata(pubKey).then(metadata => {
+    const existingItem = this.chatList.find(item => item.pubKey === pubKey);
+    if (existingItem && metadata) {
+      existingItem.metadata = metadata;
+      this.chatListSubject.next(this.chatList);
+    }
+  }).catch(error => {
+    console.error(`Failed to fetch metadata for pubKey: ${pubKey}`, error);
+  });
+}
+
+
+getChatListStream() {
+  return this.chatListSubject.asObservable();
+}
 
 
 

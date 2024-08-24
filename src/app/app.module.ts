@@ -34,7 +34,8 @@ import { PasswordDialogComponent } from './components/password-dialog/password-d
  import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
-  @NgModule({
+import { ChatListComponent } from './components/chat-list/chat-list.component';
+   @NgModule({
   declarations: [
     AppComponent,
     ProfileComponent,
@@ -55,8 +56,8 @@ import { EditProfileComponent } from './components/profile/editprofile/editprofi
     MenemonicComponent,
     PrivatekeyComponent,
     PasswordDialogComponent,
-    EditProfileComponent
-
+    EditProfileComponent,
+    ChatListComponent
   ],
   imports: [
     BrowserModule,

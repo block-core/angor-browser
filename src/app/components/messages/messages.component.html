@@ -3,9 +3,11 @@
     <div class="section-main">
       <header class="section-header">
         <div class="main-title-bar">
-          <div class="main-title-dot"></div>
-          <h1 itemprop="name">
-            <span class="section-title">{{ recipientPublicKey }}</span>
+           <h1 itemprop="name">
+            <img [src]="recipientMetadata?.picture || 'assets/images/no-image.jpg'"
+                 onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
+                 class="recipient-avatar">
+            <span class="section-title">{{ recipientMetadata?.name || recipientPublicKey }}</span>
           </h1>
         </div>
       </header>
@@ -18,7 +20,7 @@
                     [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}"
                     [class.right]="isSentByUser(msg)"
                     [class.left]="!isSentByUser(msg)">
-                  {{ msg.content }}
+                  {{ msg.decryptedMessage }}
                 </li>
               </ul>
             </div>
