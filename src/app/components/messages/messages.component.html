@@ -11,20 +11,14 @@
       </header>
       <div class="e-content article-entry" itemprop="articleBody">
         <section id="chat-section" class="chat-container h-entry">
-          <div class="chat-sidebar">
-            <h2>Contacts</h2>
-            <ul>
-              <li class="contact-item" *ngFor="let contact of contacts" (click)="onSelectContact(contact)">
-                {{ contact }}
-              </li>
-            </ul>
-          </div>
           <div class="chat-main">
-            <div class="chat-messages">
+            <div class="chat-messages" #chatMessagesContainer>
               <ul>
-                <li *ngFor="let msg of selectedContactMessages"
-                    [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}">
-                  {{ msg }}
+                <li *ngFor="let msg of messages"
+                    [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}"
+                    [class.right]="isSentByUser(msg)"
+                    [class.left]="!isSentByUser(msg)">
+                  {{ msg.content }}
                 </li>
               </ul>
             </div>

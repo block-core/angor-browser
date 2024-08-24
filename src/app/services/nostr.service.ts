@@ -14,12 +14,13 @@ import { Filter ,  } from 'nostr-tools';
 import { nip04 } from 'nostr-tools';
 import { getSharedSecret } from '@noble/secp256k1';
 import { SecurityService } from './security.service';
-import { Subject } from 'rxjs';
+import { distinctUntilChanged, filter, Subject } from 'rxjs';
 
 
 interface CustomMessageEvent {
-  contactPubkey: string;
+  isSentByUser: boolean;
   decryptedMessage: string;
+  createdAt: number;
 }
 
 @Injectable({
@@ -572,73 +573,93 @@ export class NostrService {
   }
 
 
-  // Method to fetch previous messages and subscribe to new ones// Method to fetch previous messages and subscribe to new ones
   async fetchAndSubscribeToMessages(
     pubkey: string,
-    pubkey1: string,
+    recipientPublicKey: string,
     useExtension: boolean,
     decryptedSenderPrivateKey: string
-  ): Promise<void> {
+): Promise<void> {
     await this.ensureRelaysConnected();
 
-    const messagesMap = new Map<string, string[]>();
-
-    const filter = {
-      kinds: [4], // Kind 4 for direct messages
-      '#p': [pubkey,pubkey1], // Fetch and subscribe to messages involving the user's pubkey
-    };
+    const filters = [
+      {
+        kinds: [4],
+        authors: [pubkey],
+        '#p': [recipientPublicKey]
+      },
+      {
+        kinds: [4],
+        authors: [recipientPublicKey],
+        '#p': [pubkey]
+      }
+    ];
 
     const sub = this.relayService.getPool().subscribeMany(
       this.relayService.getConnectedRelays(),
-      [filter],
+      filters,
       {
         onevent: async (event: NostrEvent) => {
-          const contactPubkey = event.pubkey === pubkey ? event.tags.find(tag => tag[0] === 'p')?.[1] : event.pubkey;
-          if (!contactPubkey) return;
+           const isSentByUser = event.pubkey === pubkey;
 
-          const decryptedMessage = await this.decryptReceivedMessage(event, useExtension, decryptedSenderPrivateKey);
+           const decryptedMessage = await this.decryptReceivedMessage(
+            event,
+            useExtension,
+            decryptedSenderPrivateKey,
+            recipientPublicKey
+          );
 
-          // Store or update the messages
-          if (messagesMap.has(contactPubkey)) {
-            messagesMap.get(contactPubkey)!.push(decryptedMessage);
-          } else {
-            messagesMap.set(contactPubkey, [decryptedMessage]);
-          }
-
-          // Emit the updated messages using the custom interface
-          this.messageSubject.next({ contactPubkey, decryptedMessage });
-
-          // If required, you can add real-time update handling here, like updating a UI component
+          this.messageSubject.next({
+            isSentByUser,
+            decryptedMessage,
+            createdAt: event.created_at,
+          });
         },
         oneose: () => {
           sub.close();
         },
       }
     );
-  }
-  // Method to decrypt received messages based on the decryption strategy
+}
+
+
+
   async decryptReceivedMessage(
     event: NostrEvent,
     useExtension: boolean,
-    decryptedSenderPrivateKey: string
-  ): Promise<string> {
+    decryptedSenderPrivateKey: string,
+    senderPublicKey: string
+): Promise<string> {
     try {
-      if (useExtension ) {
-        return await this.decryptMessageWithExtension(event.content, event.pubkey);
-      } else {
-        return await this.decryptMessage(decryptedSenderPrivateKey , event.pubkey, event.content);
-      }
+        if (useExtension) {
+            return await this.decryptMessageWithExtension(event.content, senderPublicKey);
+        } else {
+            const recipientPublicKey = event.tags.find(tag => tag[0] === 'p')?.[1] || '';
+            return await this.decryptMessage(
+                  decryptedSenderPrivateKey  ,
+                  senderPublicKey ,
+                event.content
+            );
+        }
     } catch (error) {
-      console.error('Error decrypting message:', error);
-      return 'Failed to decrypt message.';
+        console.error('Error decrypting message:', error);
+        return 'Failed to decrypt message.';
     }
-  }
+}
 
 
 
-  // Observable to subscribe to message updates in real-time
+
   getMessageUpdates() {
-    return this.messageSubject.asObservable();
+    return this.messageSubject.asObservable().pipe(
+      filter((message) => message.decryptedMessage !== 'Failed to decrypt message.'),
+
+      distinctUntilChanged((prev, curr) => prev.createdAt === curr.createdAt)
+
+    );
   }
+
+
+
+
 
 }

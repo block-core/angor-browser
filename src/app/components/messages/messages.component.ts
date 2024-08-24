@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NostrEvent } from 'nostr-tools/pure';
 import { NostrService } from '../../services/nostr.service';
@@ -11,13 +11,14 @@ import { PasswordDialogComponent } from '../password-dialog/password-dialog.comp
   styleUrls: ['./messages.component.css'],
 })
 export class MessagesComponent implements OnInit {
-  public recipientPublicKey: string = '';
-  public message: string = '';
+  @ViewChild('chatMessagesContainer') private chatMessagesContainer!: ElementRef;
 
-  public messages: Map<string, string[]> = new Map();
-  public selectedContactMessages: string[] = [];
-  public contacts: string[] = [];
-  private decryptedSenderPrivateKey: string = '';
+   public message: string = '';
+   private isUserScrolling: boolean = false;
+
+  public messages: { content: string, isSentByUser: boolean, createdAt: number }[] = [];
+  public recipientPublicKey: string = '';
+   private decryptedSenderPrivateKey: string = '';
   public isEmojiPickerVisible = false;
   public customEmojis: string[] = ['😀', '😁', '😂', '🥰', '😎', '🤩', '😢', '😡', '👍', '👎', '🙏', '👏', '❤️', '💔', '🎉', '🔥', '🌟', '🍀', '🎁', '⚽'];
   constructor(
@@ -33,9 +34,15 @@ export class MessagesComponent implements OnInit {
             this.recipientPublicKey = params.get('pubkey') || '';
             console.log(this.recipientPublicKey);
         });
+        this.chatMessagesContainer.nativeElement.addEventListener('scroll', () => {
+          const { scrollTop, scrollHeight, clientHeight } = this.chatMessagesContainer.nativeElement;
+          const isAtBottom = scrollHeight === scrollTop + clientHeight;
 
+          this.isUserScrolling = !isAtBottom;
+
+        });
         if (this.recipientPublicKey) {
-            await this.subscribeToMessagesAndContacts();
+            await this.subscribeToMessages();
         } else {
             console.error('Recipient public key is not set.');
         }
@@ -43,10 +50,47 @@ export class MessagesComponent implements OnInit {
         console.error('Error during initialization:', error);
     }
 }
-onSelectContact(contactPubkey: string): void {
-  this.recipientPublicKey = contactPubkey;
-  this.selectedContactMessages = this.messages.get(contactPubkey) || [];
+ngAfterViewChecked() {
+  if (!this.isUserScrolling) {
+    this.scrollToBottom();
+  }
 }
+
+private scrollToBottom(): void {
+  try {
+    setTimeout(() => {
+      const container = this.chatMessagesContainer.nativeElement;
+      container.scrollTop = container.scrollHeight;
+    }, 100);
+  } catch (err) {
+    console.error('Error scrolling to bottom:', err);
+  }
+}
+
+private async subscribeToMessages(): Promise<void> {
+  try {
+      const useExtension = !localStorage.getItem('nostrSecretKey');
+      const publicKey = localStorage.getItem('nostrPublicKey')!;
+
+      await this.nostrService.fetchAndSubscribeToMessages(publicKey, this.recipientPublicKey, useExtension, this.decryptedSenderPrivateKey);
+
+      console.log(this.decryptedSenderPrivateKey);
+
+
+      this.nostrService.getMessageUpdates().subscribe(({ decryptedMessage, isSentByUser, createdAt }) => {
+          this.messages.push({ content: decryptedMessage, isSentByUser, createdAt });
+          this.messages.sort((a, b) => a.createdAt - b.createdAt);
+          if (!this.isUserScrolling) {
+              this.scrollToBottom();
+          }
+      });
+  } catch (error) {
+      console.error('Error subscribing to messages:', error);
+  }
+}
+
+
+
 public toggleEmojiPicker(): void {
   this.isEmojiPickerVisible = !this.isEmojiPickerVisible;
 }
@@ -55,35 +99,7 @@ public addEmoji(emoji: string): void {
   this.message += emoji;
   this.isEmojiPickerVisible = false;
 }
-private async subscribeToMessagesAndContacts(): Promise<void> {
-  try {
-      const pubkey = this.recipientPublicKey;
-      let useExtension = true;
-      const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
 
-      if (encryptedSenderPrivateKey) {
-           useExtension = false;
-      }
-      const decryptedSenderPrivateKey = this.decryptedSenderPrivateKey;
-      const publicKey = localStorage.getItem('nostrPublicKey');
-
-       this.nostrService.fetchAndSubscribeToMessages(publicKey! ,this.recipientPublicKey, useExtension, decryptedSenderPrivateKey);
-
-       this.nostrService.getMessageUpdates().subscribe(({ contactPubkey, decryptedMessage }) => {
-          if (!this.messages.has(contactPubkey)) {
-              this.messages.set(contactPubkey, []);
-              this.contacts.push(contactPubkey);
-          }
-          this.messages.get(contactPubkey)?.push(decryptedMessage);
-
-           if (contactPubkey === this.recipientPublicKey) {
-              this.selectedContactMessages = this.messages.get(contactPubkey) || [];
-          }
-      });
-  } catch (error) {
-      console.error('Error subscribing to messages and contacts:', error);
-  }
-}
 
   private async initializeKeys(): Promise<void> {
     const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
@@ -113,23 +129,33 @@ private async subscribeToMessagesAndContacts(): Promise<void> {
       throw new Error('Encrypted sender private key not found in local storage.');
     }
   }
-
   public async sendMessage(): Promise<void> {
     try {
-        const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
-        const publicKey = localStorage.getItem('nostrPublicKey');
+      const encryptedSenderPrivateKey = localStorage.getItem('nostrSecretKey');
+      const publicKey = localStorage.getItem('nostrPublicKey');
 
-        if (encryptedSenderPrivateKey) {
-            await this.handleMessageSendingWithPrivateKey(encryptedSenderPrivateKey);
-        } else if (publicKey) {
-            await this.handleMessageSendingWithExtension();
-        } else {
-            console.error('No valid sender credentials found.');
-        }
+      if (encryptedSenderPrivateKey) {
+        await this.handleMessageSendingWithPrivateKey(encryptedSenderPrivateKey);
+      } else if (publicKey) {
+        await this.handleMessageSendingWithExtension();
+      } else {
+        console.error('No valid sender credentials found.');
+      }
+
+      this.messages.push({
+        content: this.message,
+        isSentByUser: true,
+        createdAt: Date.now(),
+      });
+
+      this.scrollToBottom();
+
+
     } catch (error) {
-        console.error('Error in sendMessage:', error);
+      console.error('Error in sendMessage:', error);
     }
-}
+  }
+
 
 private async handleMessageSendingWithPrivateKey(encryptedSenderPrivateKey: string): Promise<void> {
     if (!this.isValidMessageSetup()) {
@@ -245,9 +271,10 @@ private async signMessageEventWithExtension(
 }
 
 
-public isSentByUser(msg: string): boolean {
-   return msg.startsWith('Me: ');
+public isSentByUser(msg: { content: string, isSentByUser: boolean }): boolean {
+  return msg.isSentByUser;
 }
+
 
 
 
