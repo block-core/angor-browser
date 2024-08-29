@@ -10,11 +10,11 @@ import {
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { RelayService } from './relay.service';
-import { Filter ,  } from 'nostr-tools';
+import { Filter, } from 'nostr-tools';
 import { nip04 } from 'nostr-tools';
 import { getSharedSecret } from '@noble/secp256k1';
 import { SecurityService } from './security.service';
-import { distinctUntilChanged, filter, Subject } from 'rxjs';
+import { distinctUntilChanged, filter, Observable, Subject } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 
 
@@ -31,11 +31,19 @@ export class NostrService {
   private secretKey: Uint8Array;
   private publicKey: string;
   private eventSubject = new Subject<NostrEvent>();
-   private notificationSubject = new Subject<NostrEvent>();
+  private notificationSubject = new Subject<NostrEvent>();
   private messageSubject = new Subject<CustomMessageEvent>();
-   private groupedMessages: { [pubKey: string]: CustomMessageEvent[] } = {};
+  private currentPage = 0;
+  private messagesPerPage = 50;
+  private allDecryptedMessages: CustomMessageEvent[] = [];
+  private isProcessing = false;
 
-   private chatList: {
+  private isDecrypting = false;
+  private messageQueue: NostrEvent[] = [];
+
+  private latestMessageTimestamps: { [pubKey: string]: number } = {};
+  private processedEventIds = new Set<string>();
+  private chatList: {
     pubKey: string;
     lastMessage: string;
     lastMessageTime: number;
@@ -48,7 +56,7 @@ export class NostrService {
     lastMessageTime: number;
     metadata?: any;
   }[]>(this.chatList);
-      nostrPublicKey = '';
+  nostrPublicKey = '';
   nostrSignedEvent = '';
   nostrRelays?: string[];
 
@@ -69,7 +77,7 @@ export class NostrService {
   ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
-   }
+  }
 
 
   // Account management
@@ -111,7 +119,7 @@ export class NostrService {
     tags: string[][],
     pubkey: string
   ): Promise<NostrEvent> {
-     const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
+    const decryptedPrivateKey = await this.security.decryptData(encryptedPrivateKey, password);
     const secretKey = hexToBytes(decryptedPrivateKey);
 
     if (!this.isValidHex(bytesToHex(secretKey))) {
@@ -119,9 +127,9 @@ export class NostrService {
       throw new Error('Invalid secret key format');
     }
 
-     const event = this.createEvent(content, kind, tags, pubkey);
+    const event = this.createEvent(content, kind, tags, pubkey);
 
-     const signedEvent = finalizeEvent(event, secretKey);
+    const signedEvent = finalizeEvent(event, secretKey);
 
     if (!this.isValidHex(signedEvent.id)) {
       console.error('Invalid signed event ID:', signedEvent.id);
@@ -139,7 +147,7 @@ export class NostrService {
       throw new Error('Nostr extension not available or signEvent method is missing.');
     }
 
-     const event = this.createEvent(content, kind, tags, pubkey);
+    const event = this.createEvent(content, kind, tags, pubkey);
 
     try {
       const signedEvent = await gt.nostr.signEvent(event);
@@ -269,9 +277,9 @@ export class NostrService {
   ): Promise<NostrEvent> {
     const content = JSON.stringify({ name, about, picture });
 
-     const finalPubkey = pubkey || this.getPublicKeyHex();
+    const finalPubkey = pubkey || this.getPublicKeyHex();
 
-     const event = this.createEvent(content, 0, tags, finalPubkey);
+    const event = this.createEvent(content, 0, tags, finalPubkey);
 
     return this.publishEventToRelays(event);
   }
@@ -586,11 +594,200 @@ export class NostrService {
   bytesToHex(bytes: Uint8Array): string {
     return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
   }
+//============================================================
+
+subscribeToKind4Messages(
+  pubkey: string,
+  recipientPublicKey: string,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string
+): void {
+  this.currentPage = 0; // Reset to first page
+  this.allDecryptedMessages = []; // Reset the list of decrypted messages
+  this.processedEventIds.clear(); // Reset the set of processed event IDs
+  this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
+  this.subscribeToRealTimeMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey);
+}
 
 
-  subscribeToKind4Messages(
+
+private loadMessages(
+  pubkey: string,
+  recipientPublicKey: string,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string,
+  page: number
+): void {
+  this.relayService.ensureConnectedRelays().then(() => {
+    const filters: Filter[] = [
+      {
+        kinds: [4],
+        authors: [pubkey],
+        '#p': [recipientPublicKey],
+        limit: this.messagesPerPage,
+        until: this.getPaginationTime(page),
+      },
+      {
+        kinds: [4],
+        authors: [recipientPublicKey],
+        '#p': [pubkey],
+        limit: this.messagesPerPage,
+        until: this.getPaginationTime(page),
+      },
+    ];
+
+    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
+      onevent: (event: NostrEvent) => {
+        if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
+          this.messageQueue.push(event);
+          this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
+        }
+      },
+      oneose: () => {
+        console.log('Subscription closed');
+      },
+    });
+  });
+}
+
+
+
+private getPaginationTime(page: number): number {
+  if (page === 0) {
+    return Math.floor(Date.now() / 1000);
+
+  }
+
+  const oldestMessage = this.getOldestMessageTimestamp();
+  return oldestMessage ? oldestMessage : Math.floor(Date.now() / 1000);
+}
+
+
+
+loadMoreMessages(pubkey: string, recipientPublicKey: string, useExtension: boolean, decryptedSenderPrivateKey: string): void {
+  this.currentPage++;
+  this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
+}
+
+
+private subscribeToRealTimeMessages(
+  pubkey: string,
+  recipientPublicKey: string,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string
+): void {
+  this.relayService.ensureConnectedRelays().then(() => {
+    const filters: Filter[] = [
+      {
+        kinds: [4],
+        authors: [pubkey],
+        '#p': [recipientPublicKey],
+      },
+      {
+        kinds: [4],
+        authors: [recipientPublicKey],
+        '#p': [pubkey],
+      },
+    ];
+
+    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
+      onevent: (event: NostrEvent) => {
+        if (!this.processedEventIds.has(event.id)) {
+          this.messageQueue.push(event);
+          this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
+        }
+      },
+      oneose: () => {
+        console.log('Real-time subscription closed');
+      },
+    });
+  });
+}
+
+private async processQueue(
+  pubkey: string,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string,
+  recipientPublicKey: string
+): Promise<void> {
+  if (this.isProcessing || this.messageQueue.length === 0) {
+    return;
+  }
+
+  this.isProcessing = true;
+
+  const event = this.messageQueue.shift();
+  if (event) {
+    try {
+      const decryptedMessage = await this.decryptReceivedMessage(
+        event,
+        useExtension,
+        decryptedSenderPrivateKey,
+        recipientPublicKey
+      );
+
+      const customMessage: CustomMessageEvent = {
+        isSentByUser: event.pubkey === pubkey,
+        decryptedMessage,
+        createdAt: event.created_at,
+      };
+
+      this.allDecryptedMessages.push(customMessage);
+      this.messageSubject.next(customMessage);
+      this.processedEventIds.add(event.id);
+    } catch (error) {
+      console.error('Failed to process message:', error);
+    }
+  }
+
+  this.isProcessing = false;
+  if (this.messageQueue.length > 0) {
+    this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
+  }
+}
+
+
+
+
+private async decryptReceivedMessage(
+  event: NostrEvent,
+  useExtension: boolean,
+  decryptedSenderPrivateKey: string,
+  recipientPublicKey: string
+): Promise<string> {
+  if (useExtension) {
+    return await this.decryptMessageWithExtension(event.content, recipientPublicKey);
+  } else {
+    return await this.decryptMessage(decryptedSenderPrivateKey, recipientPublicKey, event.content);
+  }
+}
+
+
+
+
+
+private getOldestMessageTimestamp(): number | null {
+  if (this.allDecryptedMessages.length === 0) {
+    return null;
+  }
+
+  return this.allDecryptedMessages.reduce((oldest, message) => {
+    return message.createdAt < oldest ? message.createdAt : oldest;
+  }, this.allDecryptedMessages[0].createdAt);
+}
+
+
+getMessageStream(): Observable<CustomMessageEvent> {
+  return this.messageSubject.asObservable();
+}
+
+
+//============================================================
+
+
+
+  subscribeToChatList(
     pubkey: string,
-    recipientPublicKey: string,
     useExtension: boolean,
     decryptedSenderPrivateKey: string
   ): void {
@@ -599,155 +796,117 @@ export class NostrService {
         {
           kinds: [4],
           authors: [pubkey],
-          '#p': [recipientPublicKey]
         },
         {
           kinds: [4],
-          authors: [recipientPublicKey],
           '#p': [pubkey]
         }
       ];
 
       this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
         onevent: async (event: NostrEvent) => {
-          const isSentByUser = event.pubkey === pubkey;
+          const otherPartyPubKey = event.pubkey === pubkey
+            ? event.tags.find(tag => tag[0] === 'p')?.[1] || ''
+            : event.pubkey;
 
-          const decryptedMessage = await this.decryptReceivedMessage(
-            event,
-            useExtension,
-            decryptedSenderPrivateKey,
-            recipientPublicKey
-          );
+          if (!otherPartyPubKey) {
+            return;
+          }
 
-          const customMessage: CustomMessageEvent = {
-            isSentByUser,
-            decryptedMessage,
-            createdAt: event.created_at,
-          };
+          const lastTimestamp = this.latestMessageTimestamps[otherPartyPubKey] || 0;
 
-           this.messageSubject.next(customMessage);
+          if (event.created_at > lastTimestamp) {
+            this.latestMessageTimestamps[otherPartyPubKey] = event.created_at;
+            this.messageQueue.push(event);
+            this.processNextMessage(pubkey, useExtension, decryptedSenderPrivateKey);
+          }
         },
         oneose: () => {
           console.log('Subscription closed');
+          this.chatListSubject.next(this.chatList);
         }
       });
     });
   }
 
-   getMessageStream() {
-    return this.messageSubject.asObservable();
+  private async processNextMessage(pubkey: string, useExtension: boolean, decryptedSenderPrivateKey: string): Promise<void> {
+    if (this.isDecrypting || this.messageQueue.length === 0) {
+      return;
+    }
+
+    this.isDecrypting = true;
+    const event = this.messageQueue.shift();
+
+    if (!event) {
+      this.isDecrypting = false;
+      return;
+    }
+
+    const isSentByUser = event.pubkey === pubkey;
+    const otherPartyPubKey = isSentByUser
+      ? event.tags.find(tag => tag[0] === 'p')?.[1] || ''
+      : event.pubkey;
+
+    if (!otherPartyPubKey) {
+      this.isDecrypting = false;
+      return;
+    }
+
+    try {
+      const decryptedMessage = await this.decryptReceivedMessage(
+        event,
+        useExtension,
+        decryptedSenderPrivateKey,
+        otherPartyPubKey
+      );
+
+      if (decryptedMessage) {
+        const messageTimestamp = event.created_at * 1000;
+        this.addOrUpdateChatList(otherPartyPubKey, decryptedMessage, messageTimestamp);
+      }
+    } catch (error) {
+      console.error('Failed to decrypt message:', error);
+    } finally {
+      this.isDecrypting = false;
+      this.processNextMessage(pubkey, useExtension, decryptedSenderPrivateKey);
+    }
   }
 
 
-  async decryptReceivedMessage(
-    event: NostrEvent,
-    useExtension: boolean,
-    decryptedSenderPrivateKey: string,
-    senderPublicKey: string
-): Promise<string> {
-    try {
-        if (useExtension) {
-            return await this.decryptMessageWithExtension(event.content, senderPublicKey);
-        } else {
-            const recipientPublicKey = event.tags.find(tag => tag[0] === 'p')?.[1] || '';
-            return await this.decryptMessage(
-                  decryptedSenderPrivateKey  ,
-                  senderPublicKey ,
-                event.content
-            );
-        }
-    } catch (error) {
-        console.error('Error decrypting message:', error);
-        return 'Failed to decrypt message.';
-    }
-}
 
 
-subscribeToChatList(
-  pubkey: string,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string
-): void {
-  this.relayService.ensureConnectedRelays().then(() => {
+  private addOrUpdateChatList(pubKey: string, message: string, createdAt: number): void {
+    const existingItem = this.chatList.find(item => item.pubKey === pubKey);
 
-    const filters: Filter[] = [
-      {
-        kinds: [4],
-        authors: [pubkey],
-      },
-      {
-        kinds: [4],
-        '#p': [pubkey]
+    if (existingItem) {
+      if (existingItem.lastMessageTime < createdAt) {
+        existingItem.lastMessage = message;
+        existingItem.lastMessageTime = createdAt;
       }
-    ];
+    } else {
+      this.chatList.push({ pubKey, lastMessage: message, lastMessageTime: createdAt });
+      this.fetchMetadataForPubKey(pubKey);
+    }
 
-    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
-      onevent: async (event: NostrEvent) => {
-        const isSentByUser = event.pubkey === pubkey;
-        const otherPartyPubKey = isSentByUser
-          ? event.tags.find(tag => tag[0] === 'p')?.[1] || ''
-          : event.pubkey;
+    this.chatList.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+  }
 
-        if (!otherPartyPubKey) {
-          return;
-        }
-
-        try {
-          const decryptedMessage = await this.decryptReceivedMessage(
-            event,
-            useExtension,
-            decryptedSenderPrivateKey,
-            otherPartyPubKey
-          );
-
-          if (decryptedMessage) {
-            const messageTimestamp = event.created_at * 1000;
-            this.addOrUpdateChatList(otherPartyPubKey, decryptedMessage, messageTimestamp);
-          }
-        } catch (error) {
-          console.error('Failed to decrypt message:', error);
-        }
-      },
-      oneose: () => {
-        console.log('Subscription closed');
+  private fetchMetadataForPubKey(pubKey: string): void {
+    this.fetchMetadata(pubKey).then(metadata => {
+      const existingItem = this.chatList.find(item => item.pubKey === pubKey);
+      if (existingItem && metadata) {
+        existingItem.metadata = metadata;
         this.chatListSubject.next(this.chatList);
       }
+    }).catch(error => {
+      console.error(`Failed to fetch metadata for pubKey: ${pubKey}`, error);
     });
-  });
-}
-
-private addOrUpdateChatList(pubKey: string, message: string, createdAt: number): void {
-  const existingItem = this.chatList.find(item => item.pubKey === pubKey);
-
-  if (existingItem) {
-    if (existingItem.lastMessageTime < createdAt) {
-      existingItem.lastMessage = message;
-      existingItem.lastMessageTime = createdAt;
-    }
-  } else {
-    this.chatList.push({ pubKey, lastMessage: message, lastMessageTime: createdAt });
-    this.fetchMetadataForPubKey(pubKey);
   }
 
-  this.chatList.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
-}
 
-private fetchMetadataForPubKey(pubKey: string): void {
-  this.fetchMetadata(pubKey).then(metadata => {
-    const existingItem = this.chatList.find(item => item.pubKey === pubKey);
-    if (existingItem && metadata) {
-      existingItem.metadata = metadata;
-      this.chatListSubject.next(this.chatList);
-    }
-  }).catch(error => {
-    console.error(`Failed to fetch metadata for pubKey: ${pubKey}`, error);
-  });
-}
-
-
-getChatListStream() {
-  return this.chatListSubject.asObservable();
-}
+  getChatListStream() {
+    return this.chatListSubject.asObservable();
+  }
 
 
 
