@@ -59,9 +59,14 @@
   display: block;
   width: 100%;
 }
-
-.chat-time {
+.chat-message {
   font-size: 0.9em;
+}
+.chat-name{
+  font-size: 1.2em;
+}
+.chat-time {
+  font-size: 0.7em;
   color: #aaa;
   flex-shrink: 0;
   white-space: nowrap;
