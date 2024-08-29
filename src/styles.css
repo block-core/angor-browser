@@ -135,3 +135,7 @@ button {
 .mat-mdc-dialog-container .mat-mdc-dialog-title {
   color: var(--neut-L75) !important;
 }
+
+.mb-16 {
+  margin-bottom: 16px !important;
+}

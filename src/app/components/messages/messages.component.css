@@ -14,7 +14,7 @@
 
 .chat-container {
   display: flex;
-  height: calc(100vh - 250px);
+  height: calc(100vh - 305px);
   background: var(--background-color);
   color: var(--text-color);
   border-radius: 8px;
@@ -254,7 +254,7 @@
   border-radius: 50%;
   margin-right: 10px;
   border: 2px solid var(--primary);
-  object-fit: cover;  
+  object-fit: cover;
 }
 .message-timestamp {
   display: block;

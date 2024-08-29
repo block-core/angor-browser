@@ -11,7 +11,6 @@
       grid-row: 3 !important;
       grid-column-start: 1 !important;
       grid-column-end: 2 !important;
-      margin-top: 48px !important;
     }
 
     #content-body {
@@ -24,10 +23,6 @@
 
     #footer-wrapper {
       grid-row: 4 !important;
-    }
-
-    .widget-wrap {
-      margin-bottom: 16px !important;
     }
 
     .info-card .avatar {
@@ -83,7 +78,6 @@
       grid-row: 3 !important;
       grid-column-start: 1 !important;
       grid-column-end: 2 !important;
-      margin-top: 48px !important;
     }
 
     #content-body {
@@ -98,9 +92,7 @@
       grid-row: 4 !important;
     }
 
-    .widget-wrap {
-      margin-bottom: 16px !important;
-    }
+
 
     .nav-icon,
     .btn-angor {

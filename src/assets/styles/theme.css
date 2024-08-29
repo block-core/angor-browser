@@ -389,7 +389,6 @@ body {
     grid-row: 3;
     grid-column-start: 1;
     grid-column-end: 3;
-    margin-top: 48px;
   }
   #main-grid #content-body {
     grid-column-start: 1;
@@ -407,7 +406,6 @@ body {
     grid-row: 3;
     grid-column-start: 1;
     grid-column-end: 3;
-    margin-top: 48px;
   }
   #main-grid #content-body {
     grid-column-start: 1;
@@ -1057,12 +1055,9 @@ menu {
   display: flex;
   gap: 4px;
 }
-.section {
-  margin-bottom: 16px;
-}
+
 .section-inner {
   overflow: hidden;
-  margin-bottom: 16px;
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -2535,15 +2530,15 @@ pre .javascript .function {
   }
 }
 .back-to-top-btn {
-  width: 60px;
-  height: 60px;
+  width: 30px;
+  height: 30px;
   font-family: FontAwesome;
   color: var(--card-btn-icon);
-  font-size: 36px;
+  font-size: 30px;
   font-weight: bold;
   border: none;
   position: fixed;
-  bottom: 240px;
+  bottom: 40px;
   opacity: 1;
   -webkit-transition: background 0.15s ease-out, opacity 0.15s ease-out,
     -webkit-transform 0.15s ease-out;
@@ -2728,13 +2723,11 @@ input[type="range"] {
 @media screen and (min-width: 768px) and (max-width: 1023px) {
   #sidebar {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     grid-gap: 16px;
   }
 }
-.widget-wrap {
-  margin-bottom: 16px;
-}
+
 .widget-title {
   color: var(--widget-title);
   font-size: 20px;
