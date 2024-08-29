@@ -14,7 +14,7 @@
 
 .chat-container {
   display: flex;
-  height: calc(100vh - 250px); /* 100vh minus header height */
+  height: calc(100vh - 250px);
   background: var(--background-color);
   color: var(--text-color);
   border-radius: 8px;
@@ -35,7 +35,7 @@
   padding: 15px;
   background: var(--card-background);
   border-right: 1px solid var(--text-color);
-  overflow-y: auto; /* Enable scrolling for long contact lists */
+  overflow-y: auto;
 }
 
 .chat-sidebar h2 {
@@ -66,7 +66,7 @@
 .chat-messages {
   flex-grow: 1;
   padding: 20px;
-  overflow-y: auto; /* Enable scrolling for messages */
+  overflow-y: auto;
   background: var(--card-background);
 }
 
@@ -98,7 +98,7 @@
   padding: 15px;
   background: var(--card-background);
   border-top: 1px solid var(--text-color);
-  position: sticky; /* Stick to the bottom */
+  position: sticky;
   bottom: 0;
 }
 
@@ -254,5 +254,45 @@
   border-radius: 50%;
   margin-right: 10px;
   border: 2px solid var(--primary);
-  object-fit: cover; /* Ensure the image covers the container */
+  object-fit: cover;  
+}
+.message-timestamp {
+  display: block;
+  font-size: 0.8em;
+  color: var(--text-color);
+  opacity: 0.6;
+  margin-top: 5px;
+  text-align: right;
+}
+.sent-message .message-timestamp {
+  text-align: left;
+}
+
+.received-message .message-timestamp {
+  text-align: right;
+}
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.sent-message.ltr {
+  text-align: left;
+}
+
+.sent-message.rtl {
+  text-align: right;
+}
+
+.received-message.ltr {
+  text-align: left;
+}
+
+.received-message.rtl {
+  text-align: right;
 }

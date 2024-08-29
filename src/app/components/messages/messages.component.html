@@ -17,12 +17,16 @@
             <div class="chat-messages" #chatMessagesContainer>
               <ul>
                 <li *ngFor="let msg of messages"
-                    [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}"
-                    [class.right]="isSentByUser(msg)"
-                    [class.left]="!isSentByUser(msg)">
-                  {{ msg.decryptedMessage }}
-                </li>
+                [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}"
+                [class.right]="isSentByUser(msg)"
+                [class.left]="!isSentByUser(msg)"
+                [class.ltr]="!isRTL(msg.decryptedMessage)"
+                [class.rtl]="isRTL(msg.decryptedMessage)">
+              {{ msg.decryptedMessage }}
+              <span class="message-timestamp">{{ msg.createdAt | date: 'short' }}</span>
+            </li>
               </ul>
+
             </div>
             <div class="chat-input">
               <textarea [(ngModel)]="message" placeholder="Type your message here"></textarea>

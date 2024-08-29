@@ -74,7 +74,7 @@ export class NostrService {
   constructor(
     private relayService: RelayService,
     private security: SecurityService,
-   ) {
+  ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
   }
@@ -698,13 +698,15 @@ export class NostrService {
             );
 
             if (decryptedMessage) {
+              const messageTimestamp = event.created_at * 1000;
               const customMessage: CustomMessageEvent = {
                 isSentByUser: event.pubkey === pubkey,
                 decryptedMessage,
-                createdAt: event.created_at,
+                createdAt: messageTimestamp,
               };
 
               this.allDecryptedMessages.push(customMessage);
+              this.allDecryptedMessages.sort((a, b) => a.createdAt - b.createdAt);
               this.messageSubject.next(customMessage);
               this.processedEventIds.add(event.id);
 
@@ -731,6 +733,8 @@ export class NostrService {
       this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
     }
   }
+
+
 
   private async decryptReceivedMessage(
     event: NostrEvent,

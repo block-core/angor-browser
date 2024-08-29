@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   margin: 10px;
-
+  overflow: hidden;
 }
 
 .project-card:hover, .chat-item:hover {
@@ -36,6 +36,7 @@
 
 .chat-avatar {
   margin-right: 15px;
+  flex-shrink: 0;
 }
 
 .chat-avatar img {
@@ -46,28 +47,28 @@
 
 .chat-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.chat-name {
-  font-size: 1.2em;
-  margin: 0;
-  font-weight: bold;
-}
-
+.chat-name,
 .chat-message {
-  margin: 5px 0;
-  color: #555;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  width: 100%;
 }
 
 .chat-time {
   font-size: 0.9em;
   color: #aaa;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: 10px;
 }
 
- .section-header .main-title-bar {
+.section-header .main-title-bar {
   display: flex;
   align-items: center;
 }
@@ -76,4 +77,18 @@
   max-width: 100%;
   padding: 10px;
   box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .chat-name,
+  .chat-message {
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-name,
+  .chat-message {
+    max-width: 100%;
+  }
 }
