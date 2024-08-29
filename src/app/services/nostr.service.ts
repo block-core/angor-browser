@@ -692,7 +692,7 @@ private subscribeToRealTimeMessages(
 
     this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
       onevent: (event: NostrEvent) => {
-        if (!this.processedEventIds.has(event.id)) {
+        if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
           this.messageQueue.push(event);
           this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
         }
@@ -710,38 +710,58 @@ private async processQueue(
   decryptedSenderPrivateKey: string,
   recipientPublicKey: string
 ): Promise<void> {
-  if (this.isProcessing || this.messageQueue.length === 0) {
+  if (this.isProcessing) {
+    console.log('Processing is already in progress, waiting for the current batch to finish...');
     return;
   }
 
   this.isProcessing = true;
 
-  const event = this.messageQueue.shift();
-  if (event) {
-    try {
-      const decryptedMessage = await this.decryptReceivedMessage(
-        event,
-        useExtension,
-        decryptedSenderPrivateKey,
-        recipientPublicKey
-      );
+  try {
+    while (this.messageQueue.length > 0) {
+      const event = this.messageQueue.shift();
+      if (event && !this.processedEventIds.has(event.id)) {
+        console.log(`Processing event with ID: ${event.id}`);
 
-      const customMessage: CustomMessageEvent = {
-        isSentByUser: event.pubkey === pubkey,
-        decryptedMessage,
-        createdAt: event.created_at,
-      };
+        try {
+          const decryptedMessage = await this.decryptReceivedMessage(
+            event,
+            useExtension,
+            decryptedSenderPrivateKey,
+            recipientPublicKey
+          );
 
-      this.allDecryptedMessages.push(customMessage);
-      this.messageSubject.next(customMessage);
-      this.processedEventIds.add(event.id);
-    } catch (error) {
-      console.error('Failed to process message:', error);
+          if (decryptedMessage) {
+            const customMessage: CustomMessageEvent = {
+              isSentByUser: event.pubkey === pubkey,
+              decryptedMessage,
+              createdAt: event.created_at,
+            };
+
+            this.allDecryptedMessages.push(customMessage);
+            this.messageSubject.next(customMessage);
+            this.processedEventIds.add(event.id);
+
+            console.log(`Successfully processed event with ID: ${event.id}`);
+          } else {
+            console.warn(`Decrypted message is empty for event ID: ${event.id}`);
+          }
+        } catch (decryptError) {
+          console.error(`Failed to decrypt event with ID: ${event.id}`, decryptError);
+        }
+      } else {
+        console.log(`Event with ID: ${event?.id} has already been processed or is invalid.`);
+      }
     }
+  } catch (queueError) {
+    console.error('An error occurred while processing the message queue:', queueError);
+  } finally {
+    this.isProcessing = false;
+    console.log('Finished processing the message queue.');
   }
 
-  this.isProcessing = false;
   if (this.messageQueue.length > 0) {
+    console.log('Re-triggering processQueue as there are more messages in the queue...');
     this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
   }
 }
