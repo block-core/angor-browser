@@ -34,6 +34,8 @@ import { PasswordDialogComponent } from './components/password-dialog/password-d
 import { MatInputModule } from '@angular/material/input';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
 import { ChatListComponent } from './components/chat-list/chat-list.component';
+import { NgScrollbarModule } from 'ngx-scrollbar';
+
    @NgModule({
   declarations: [
     AppComponent,
@@ -68,7 +70,8 @@ import { ChatListComponent } from './components/chat-list/chat-list.component';
       ReactiveFormsModule,
        MatFormFieldModule,
       MatInputModule,
-      FormsModule
+      FormsModule,
+      NgScrollbarModule
    ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],

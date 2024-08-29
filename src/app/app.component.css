@@ -154,3 +154,16 @@
   .notifications-link-text span{
     margin-left: 10px;
   }
+  .angor-scrollbar {
+    --scrollbar-border-radius: 7px;
+    --scrollbar-padding: 4px;
+    --scrollbar-viewport-margin: 0;
+    --scrollbar-track-color: transparent;
+    --scrollbar-wrapper-color: transparent;
+    --scrollbar-thumb-color: rgba(95, 95, 95, 0.5);
+    --scrollbar-thumb-hover-color: var(--scrollbar-thumb-color);
+    --scrollbar-size: 10px;
+    --scrollbar-hover-size: var(--scrollbar-size);
+    --scrollbar-thumb-transition: height ease-out 150ms, width ease-out 150ms;
+    --scrollbar-track-transition: height ease-out 150ms, width ease-out 150ms;
+  }
