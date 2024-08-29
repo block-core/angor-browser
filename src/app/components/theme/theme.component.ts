@@ -1,20 +1,27 @@
 import { Component } from '@angular/core';
-   import { MatDialog } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ThemeColorComponent } from './theme-color/theme-color.component';
-   
+
 @Component({
   selector: 'app-theme',
   templateUrl: './theme.component.html',
-  styleUrl: './theme.component.css'
+  styleUrls: ['./theme.component.css']
 })
 export class ThemeComponent {
-  constructor( public dialog: MatDialog) { }
-
+  constructor(public dialog: MatDialog) { }
 
   openSettings() {
-    this.dialog.open(ThemeColorComponent, {
+    const dialogRef = this.dialog.open(ThemeColorComponent, {
       width: '420px',
-      panelClass: 'custom-dialog-container'
+      panelClass: 'custom-dialog-container',
+      maxHeight: '90vh',
+      height: 'auto',
+    });
+
+    document.body.classList.add('dialog-open');
+
+    dialogRef.afterClosed().subscribe(() => {
+      document.body.classList.remove('dialog-open');
     });
   }
 }

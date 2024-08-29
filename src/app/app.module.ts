@@ -25,7 +25,6 @@ import { MessagesComponent } from './components/messages/messages.component';
 import { ExploreComponent } from './components/explore/explore.component';
 import { ProjectDetailsComponent } from './components/project-details/project-details.component';
 import { MatDialogModule } from '@angular/material/dialog';
-import { MouseMoveDirective } from './mouse-move.directive';
 import { ExtensionComponent } from './components/profile/extension/extension.component';
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
@@ -50,7 +49,6 @@ import { ChatListComponent } from './components/chat-list/chat-list.component';
     MessagesComponent,
     ExploreComponent,
     ProjectDetailsComponent,
-    MouseMoveDirective,
     ExtensionComponent,
     NewComponent,
     MenemonicComponent,

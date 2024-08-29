@@ -65,10 +65,13 @@ export class EditProfileComponent implements OnInit {
 
     if (publicKey && encryptedPrivateKey) {
       const dialogRef = this.dialog.open(PasswordDialogComponent, {
-        width: '360px',
+        width: '420px',
+        panelClass: 'custom-dialog-container',
+        maxHeight: '90vh',
+        height: 'auto',
         data: { message: 'Please enter password' },
       });
-
+      document.body.classList.add('dialog-open');
       dialogRef.afterClosed().subscribe((password) => {
         if (password) {
           const options = {
@@ -83,6 +86,7 @@ export class EditProfileComponent implements OnInit {
             .signEvent(content, kind, options)
             .then(callback)
             .catch((error) => this.handleError(error, 'Error signing event.'));
+            document.body.classList.remove('dialog-open');
         }
       });
     } else if (publicKey) {

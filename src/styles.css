@@ -59,25 +59,6 @@ html, body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  overflow-y: scroll;
-  padding-right: 8px;
-}
-
-body::-webkit-scrollbar {
-  width: 8px;
-  background-color: transparent;
-}
-
-body::-webkit-scrollbar-thumb {
-  background-color: rgba(87, 87, 87, 0.5);
-  border-radius: 5px;
-}
-
-body.idle::-webkit-scrollbar-thumb {
-  background-color: transparent;
-}
-
-body.idle {
   padding-right: 8px;
 }
 
@@ -138,4 +119,16 @@ button {
 
 .mb-16 {
   margin-bottom: 16px !important;
+}
+
+body.dialog-open {
+  overflow: hidden;
+}
+.mat-dialog-container , .mat-mdc-dialog-container {
+  overflow: auto;
+  max-height: 90vh;
+}
+
+body.dialog-open {
+  overflow: hidden;
 }
