@@ -32,23 +32,25 @@
   <div class="section-inner">
     <div class="section-main">
       <header class="section-header">
-        <div class="main-title-bar">
+        <!-- <div class="main-title-bar">
           <div class="main-title-dot"></div>
           <h1 itemprop="name">
             <span class="section-title">Home</span>
           </h1>
-        </div>
+        </div> -->
 
       </header>
       <div class="e-content article-entry" itemprop="articleBody">
-        <div class="event-list">
-          <div *ngFor="let event of events" class="event-item">
-            <p><strong>{{ event.pubkey }}</strong></p>
-            <p>{{ event.content }}</p>
-            <hr>
-          </div>
-        </div>
+        <div class="messages">
+          <div *ngFor="let item of eventsWithMetadata" class="event-item">
+            <div class="event-metadata">
 
+              <img *ngIf="item.metadata?.picture" [src]="item.metadata.picture" alt="Author's Picture" class="author-picture">
+               <h3>{{ item.metadata?.name || 'Unknown Author' }}</h3>
+            </div>
+            <div class="event-content" [innerHTML]="item.safeContent"></div>
+           </div>
+        </div>
       </div>
     </div>
   </div>

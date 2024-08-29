@@ -73,8 +73,8 @@ export class NostrService {
 
   constructor(
     private relayService: RelayService,
-    private security: SecurityService
-  ) {
+    private security: SecurityService,
+   ) {
     this.secretKey = generateSecretKey();
     this.publicKey = getPublicKey(this.secretKey);
   }
@@ -391,35 +391,7 @@ export class NostrService {
     });
   }
 
-  async getKind4MessagesToMe(): Promise<NostrEvent[]> {
-    await this.ensureRelaysConnected();
-    const pool = this.relayService.getPool();
-    const connectedRelays = this.relayService.getConnectedRelays();
 
-    if (connectedRelays.length === 0) {
-      throw new Error('No connected relays');
-    }
-
-    const filter1: Filter = {
-      kinds: [4],
-      '#p': [this.publicKey],
-      limit: 50,
-    };
-
-    return new Promise((resolve) => {
-      const events: NostrEvent[] = [];
-      const sub = pool.subscribeMany(connectedRelays, [filter1], {
-        onevent: (event: NostrEvent) => {
-          events.push(event);
-          this.eventSubject.next(event); // Emit the event to subscribers
-        },
-        oneose() {
-          sub.close();
-          resolve(events);
-        },
-      });
-    });
-  }
 
   async getEventsByAuthor(
     pubkey: string,
@@ -507,12 +479,12 @@ export class NostrService {
     });
   }
 
-
-  subscribeToMyEventsAndFollowing(pubkey: string): void {
+  subscribeToMyEvents(pubkey: string): void {
     this.relayService.ensureConnectedRelays().then(() => {
       const filter: Filter = {
         kinds: [1], // Kind 1 represents text notes
         authors: [pubkey],
+        limit: 20
       };
 
       this.relayService.subscribeToFilter(filter);
@@ -523,6 +495,7 @@ export class NostrService {
         const followingFilter: Filter = {
           kinds: [1],
           authors: followingPubkeys,
+          limit: 50
         };
         this.relayService.subscribeToFilter(followingFilter);
       });
@@ -530,7 +503,8 @@ export class NostrService {
   }
 
 
-  // Subscribe to notification events
+  //notification================================================================
+
   subscribeToNotifications(pubkey: string): void {
     this.relayService.ensureConnectedRelays().then(() => {
       // Define a filter for notifications
@@ -561,8 +535,7 @@ export class NostrService {
   getEventStream() {
     return this.relayService.getEventStream();
   }
-
-  // Nostr Extension Interactions
+  //Nostr Extension Interactions=======================================================
   async getNostrPublicKeyFromExtension() {
     const gt = globalThis as any;
     const pubKey = await gt.nostr.getPublicKey();
@@ -576,7 +549,7 @@ export class NostrService {
     this.nostrRelays = relays;
   }
 
-  // Utility methods
+  // utility methods ================================================================
   isValidHex(hexString: string): boolean {
     return /^[0-9a-fA-F]+$/.test(hexString) && hexString.length % 2 === 0;
   }
@@ -594,217 +567,200 @@ export class NostrService {
   bytesToHex(bytes: Uint8Array): string {
     return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
   }
-//============================================================
+  //Mwssages============================================================
 
-subscribeToKind4Messages(
-  pubkey: string,
-  recipientPublicKey: string,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string
-): void {
-  this.currentPage = 0; // Reset to first page
-  this.allDecryptedMessages = []; // Reset the list of decrypted messages
-  this.processedEventIds.clear(); // Reset the set of processed event IDs
-  this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
-  this.subscribeToRealTimeMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey);
-}
-
-
-
-private loadMessages(
-  pubkey: string,
-  recipientPublicKey: string,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string,
-  page: number
-): void {
-  this.relayService.ensureConnectedRelays().then(() => {
-    const filters: Filter[] = [
-      {
-        kinds: [4],
-        authors: [pubkey],
-        '#p': [recipientPublicKey],
-        limit: this.messagesPerPage,
-        until: this.getPaginationTime(page),
-      },
-      {
-        kinds: [4],
-        authors: [recipientPublicKey],
-        '#p': [pubkey],
-        limit: this.messagesPerPage,
-        until: this.getPaginationTime(page),
-      },
-    ];
-
-    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
-      onevent: (event: NostrEvent) => {
-        if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
-          this.messageQueue.push(event);
-          this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
-        }
-      },
-      oneose: () => {
-        console.log('Subscription closed');
-      },
-    });
-  });
-}
-
-
-
-private getPaginationTime(page: number): number {
-  if (page === 0) {
-    return Math.floor(Date.now() / 1000);
-
+  subscribeToKind4Messages(
+    pubkey: string,
+    recipientPublicKey: string,
+    useExtension: boolean,
+    decryptedSenderPrivateKey: string
+  ): void {
+    this.currentPage = 0; // Reset to first page
+    this.allDecryptedMessages = []; // Reset the list of decrypted messages
+    this.processedEventIds.clear(); // Reset the set of processed event IDs
+    this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
+    this.subscribeToRealTimeMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey);
   }
 
-  const oldestMessage = this.getOldestMessageTimestamp();
-  return oldestMessage ? oldestMessage : Math.floor(Date.now() / 1000);
-}
+  private loadMessages(
+    pubkey: string,
+    recipientPublicKey: string,
+    useExtension: boolean,
+    decryptedSenderPrivateKey: string,
+    page: number
+  ): void {
+    this.relayService.ensureConnectedRelays().then(() => {
+      const filters: Filter[] = [
+        {
+          kinds: [4],
+          authors: [pubkey],
+          '#p': [recipientPublicKey],
+          limit: this.messagesPerPage,
+          until: this.getPaginationTime(page),
+        },
+        {
+          kinds: [4],
+          authors: [recipientPublicKey],
+          '#p': [pubkey],
+          limit: this.messagesPerPage,
+          until: this.getPaginationTime(page),
+        },
+      ];
 
-
-
-loadMoreMessages(pubkey: string, recipientPublicKey: string, useExtension: boolean, decryptedSenderPrivateKey: string): void {
-  this.currentPage++;
-  this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
-}
-
-
-private subscribeToRealTimeMessages(
-  pubkey: string,
-  recipientPublicKey: string,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string
-): void {
-  this.relayService.ensureConnectedRelays().then(() => {
-    const filters: Filter[] = [
-      {
-        kinds: [4],
-        authors: [pubkey],
-        '#p': [recipientPublicKey],
-      },
-      {
-        kinds: [4],
-        authors: [recipientPublicKey],
-        '#p': [pubkey],
-      },
-    ];
-
-    this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
-      onevent: (event: NostrEvent) => {
-        if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
-          this.messageQueue.push(event);
-          this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
-        }
-      },
-      oneose: () => {
-        console.log('Real-time subscription closed');
-      },
-    });
-  });
-}
-
-private async processQueue(
-  pubkey: string,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string,
-  recipientPublicKey: string
-): Promise<void> {
-  if (this.isProcessing) {
-    console.log('Processing is already in progress, waiting for the current batch to finish...');
-    return;
-  }
-
-  this.isProcessing = true;
-
-  try {
-    while (this.messageQueue.length > 0) {
-      const event = this.messageQueue.shift();
-      if (event && !this.processedEventIds.has(event.id)) {
-        console.log(`Processing event with ID: ${event.id}`);
-
-        try {
-          const decryptedMessage = await this.decryptReceivedMessage(
-            event,
-            useExtension,
-            decryptedSenderPrivateKey,
-            recipientPublicKey
-          );
-
-          if (decryptedMessage) {
-            const customMessage: CustomMessageEvent = {
-              isSentByUser: event.pubkey === pubkey,
-              decryptedMessage,
-              createdAt: event.created_at,
-            };
-
-            this.allDecryptedMessages.push(customMessage);
-            this.messageSubject.next(customMessage);
-            this.processedEventIds.add(event.id);
-
-            console.log(`Successfully processed event with ID: ${event.id}`);
-          } else {
-            console.warn(`Decrypted message is empty for event ID: ${event.id}`);
+      this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
+        onevent: (event: NostrEvent) => {
+          if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
+            this.messageQueue.push(event);
+            this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
           }
-        } catch (decryptError) {
-          console.error(`Failed to decrypt event with ID: ${event.id}`, decryptError);
-        }
-      } else {
-        console.log(`Event with ID: ${event?.id} has already been processed or is invalid.`);
-      }
+        },
+        oneose: () => {
+          console.log('Subscription closed');
+        },
+      });
+    });
+  }
+
+  private getPaginationTime(page: number): number {
+    if (page === 0) {
+      return Math.floor(Date.now() / 1000);
+
     }
-  } catch (queueError) {
-    console.error('An error occurred while processing the message queue:', queueError);
-  } finally {
-    this.isProcessing = false;
-    console.log('Finished processing the message queue.');
+
+    const oldestMessage = this.getOldestMessageTimestamp();
+    return oldestMessage ? oldestMessage : Math.floor(Date.now() / 1000);
   }
 
-  if (this.messageQueue.length > 0) {
-    console.log('Re-triggering processQueue as there are more messages in the queue...');
-    this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
-  }
-}
-
-
-
-
-private async decryptReceivedMessage(
-  event: NostrEvent,
-  useExtension: boolean,
-  decryptedSenderPrivateKey: string,
-  recipientPublicKey: string
-): Promise<string> {
-  if (useExtension) {
-    return await this.decryptMessageWithExtension(event.content, recipientPublicKey);
-  } else {
-    return await this.decryptMessage(decryptedSenderPrivateKey, recipientPublicKey, event.content);
-  }
-}
-
-
-
-
-
-private getOldestMessageTimestamp(): number | null {
-  if (this.allDecryptedMessages.length === 0) {
-    return null;
+  loadMoreMessages(pubkey: string, recipientPublicKey: string, useExtension: boolean, decryptedSenderPrivateKey: string): void {
+    this.currentPage++;
+    this.loadMessages(pubkey, recipientPublicKey, useExtension, decryptedSenderPrivateKey, this.currentPage);
   }
 
-  return this.allDecryptedMessages.reduce((oldest, message) => {
-    return message.createdAt < oldest ? message.createdAt : oldest;
-  }, this.allDecryptedMessages[0].createdAt);
-}
+  private subscribeToRealTimeMessages(
+    pubkey: string,
+    recipientPublicKey: string,
+    useExtension: boolean,
+    decryptedSenderPrivateKey: string
+  ): void {
+    this.relayService.ensureConnectedRelays().then(() => {
+      const filters: Filter[] = [
+        {
+          kinds: [4],
+          authors: [pubkey],
+          '#p': [recipientPublicKey],
+        },
+        {
+          kinds: [4],
+          authors: [recipientPublicKey],
+          '#p': [pubkey],
+        },
+      ];
+
+      this.relayService.getPool().subscribeMany(this.relayService.getConnectedRelays(), filters, {
+        onevent: (event: NostrEvent) => {
+          if (!this.processedEventIds.has(event.id) && !this.messageQueue.some(e => e.id === event.id)) {
+            this.messageQueue.push(event);
+            this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
+          }
+        },
+        oneose: () => {
+          console.log('Real-time subscription closed');
+        },
+      });
+    });
+  }
+
+  private async processQueue(
+    pubkey: string,
+    useExtension: boolean,
+    decryptedSenderPrivateKey: string,
+    recipientPublicKey: string
+  ): Promise<void> {
+    if (this.isProcessing) {
+      console.log('Processing is already in progress, waiting for the current batch to finish...');
+      return;
+    }
+
+    this.isProcessing = true;
+
+    try {
+      while (this.messageQueue.length > 0) {
+        const event = this.messageQueue.shift();
+        if (event && !this.processedEventIds.has(event.id)) {
+          console.log(`Processing event with ID: ${event.id}`);
+
+          try {
+            const decryptedMessage = await this.decryptReceivedMessage(
+              event,
+              useExtension,
+              decryptedSenderPrivateKey,
+              recipientPublicKey
+            );
+
+            if (decryptedMessage) {
+              const customMessage: CustomMessageEvent = {
+                isSentByUser: event.pubkey === pubkey,
+                decryptedMessage,
+                createdAt: event.created_at,
+              };
+
+              this.allDecryptedMessages.push(customMessage);
+              this.messageSubject.next(customMessage);
+              this.processedEventIds.add(event.id);
+
+              console.log(`Successfully processed event with ID: ${event.id}`);
+            } else {
+              console.warn(`Decrypted message is empty for event ID: ${event.id}`);
+            }
+          } catch (decryptError) {
+            console.error(`Failed to decrypt event with ID: ${event.id}`, decryptError);
+          }
+        } else {
+          console.log(`Event with ID: ${event?.id} has already been processed or is invalid.`);
+        }
+      }
+    } catch (queueError) {
+      console.error('An error occurred while processing the message queue:', queueError);
+    } finally {
+      this.isProcessing = false;
+      console.log('Finished processing the message queue.');
+    }
+
+    if (this.messageQueue.length > 0) {
+      console.log('Re-triggering processQueue as there are more messages in the queue...');
+      this.processQueue(pubkey, useExtension, decryptedSenderPrivateKey, recipientPublicKey);
+    }
+  }
+
+  private async decryptReceivedMessage(
+    event: NostrEvent,
+    useExtension: boolean,
+    decryptedSenderPrivateKey: string,
+    recipientPublicKey: string
+  ): Promise<string> {
+    if (useExtension) {
+      return await this.decryptMessageWithExtension(event.content, recipientPublicKey);
+    } else {
+      return await this.decryptMessage(decryptedSenderPrivateKey, recipientPublicKey, event.content);
+    }
+  }
+
+  private getOldestMessageTimestamp(): number | null {
+    if (this.allDecryptedMessages.length === 0) {
+      return null;
+    }
+
+    return this.allDecryptedMessages.reduce((oldest, message) => {
+      return message.createdAt < oldest ? message.createdAt : oldest;
+    }, this.allDecryptedMessages[0].createdAt);
+  }
+
+  getMessageStream(): Observable<CustomMessageEvent> {
+    return this.messageSubject.asObservable();
+  }
 
 
-getMessageStream(): Observable<CustomMessageEvent> {
-  return this.messageSubject.asObservable();
-}
-
-
-//============================================================
-
-
+  //Chat list============================================================
 
   subscribeToChatList(
     pubkey: string,
@@ -892,9 +848,6 @@ getMessageStream(): Observable<CustomMessageEvent> {
     }
   }
 
-
-
-
   private addOrUpdateChatList(pubKey: string, message: string, createdAt: number): void {
     const existingItem = this.chatList.find(item => item.pubKey === pubKey);
 
@@ -927,8 +880,4 @@ getMessageStream(): Observable<CustomMessageEvent> {
   getChatListStream() {
     return this.chatListSubject.asObservable();
   }
-
-
-
-
 }
