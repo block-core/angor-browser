@@ -1,5 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, HostListener, Inject, PLATFORM_ID, ViewChild, OnInit } from '@angular/core';
+import { NotificationService } from './services/notification.service';
 
 
 @Component({
@@ -22,21 +23,20 @@ export class AppComponent implements OnInit {
 
 
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
+  constructor(@Inject(PLATFORM_ID) private platformId: Object ,private notificationService: NotificationService) { }
 
 
 
-
-
-
-
-
-  ngOnInit() {
+  ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.setInitialTheme();
-      
+
     }
+    this.notificationService.getNotificationCount().subscribe((count) => {
+      this.unreadCount = count;
+    });
   }
+
 
   title = 'angor-browse';
 

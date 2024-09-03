@@ -132,3 +132,16 @@ body.dialog-open {
 body.dialog-open {
   overflow: hidden;
 }
+::-webkit-scrollbar {
+  width: 8px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(87, 87, 87, 0.5);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(87, 87, 87, 0.7);
+}

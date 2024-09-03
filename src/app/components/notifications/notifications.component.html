@@ -1,25 +1,25 @@
-   <section id="page-notifications" class="h-entry section section-type-page">
-    <div class="section-inner">
-      <div class="section-main">
-        <header class="section-header">
-          <div class="main-title-bar">
-            <div class="main-title-dot"></div>
-            <h1 itemprop="name">
-              <span class="section-title">Notifications</span>
-            </h1>
-          </div>
-
-        </header>
-        <div class="e-content article-entry" itemprop="articleBody">
-          <div class="notification-list">
-            <div *ngFor="let notification of notifications" class="notification-item">
-              <p><strong>{{ notification.pubkey }}</strong> mentioned you:</p>
-              <p>{{ notification.content }}</p>
+<section id="page-notifications" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Notifications</span>
+          </h1>
+        </div>
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        <div class="notification-list">
+          <div *ngFor="let notification of notifications" class="notification-item">
+            <div class="notification-metadata">
+              <img *ngIf="notification.metadata?.picture" [src]="notification.metadata?.picture" alt="Sender's Picture" class="sender-picture">
+              <b class="name">{{ notification.metadata?.name || notification.pubkey }}</b> <span class="red"> mentioned you:</span>
             </div>
+            <p [innerHTML]="parseContent(notification.content)"></p>
           </div>
-
         </div>
       </div>
     </div>
-  </section>
-
+  </div>
+</section>
