@@ -4,18 +4,17 @@ import {
   getPublicKey,
   finalizeEvent,
   verifyEvent,
-  Event as NostrEvent,
-  getEventHash,
+  Event as NostrEvent
 } from 'nostr-tools/pure';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { RelayService } from './relay.service';
-import { Filter, } from 'nostr-tools';
+import { Filter,kinds } from 'nostr-tools';
 import { nip04 } from 'nostr-tools';
-import { getSharedSecret } from '@noble/secp256k1';
 import { SecurityService } from './security.service';
-import { distinctUntilChanged, filter, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
+import { EncryptedDirectMessage } from 'nostr-tools/kinds';
 
 
 interface CustomMessageEvent {
@@ -774,11 +773,11 @@ export class NostrService {
     this.relayService.ensureConnectedRelays().then(() => {
       const filters: Filter[] = [
         {
-          kinds: [4],
+          kinds: [EncryptedDirectMessage],
           authors: [pubkey],
         },
         {
-          kinds: [4],
+          kinds: [EncryptedDirectMessage],
           '#p': [pubkey]
         }
       ];

@@ -32,7 +32,7 @@ const routes: Routes = [
   { path: 'messages/:pubkey',component:MessagesComponent},
   { path: 'bookmarks',component:BookmarksComponent},
   { path: 'notifications',component:NotificationsComponent},
-  { path: 'setings',component:SettingsComponent},
+  { path: 'settings',component:SettingsComponent},
   { path: 'help',component:HelpComponent},
   { path: '**', redirectTo: '', pathMatch: 'full' }
  ];
