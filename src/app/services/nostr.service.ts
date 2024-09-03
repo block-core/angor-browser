@@ -510,12 +510,18 @@ export class NostrService {
       const filter: Filter = {
         kinds: [1, 4], // Kind 1 for text notes, kind 4 for encrypted direct messages
         '#p': [pubkey], // Events tagged with the user's public key
+        limit:50
       };
 
       this.relayService.subscribeToFilter(filter);
 
       this.relayService.getEventStream().subscribe((event) => {
         if (this.isNotificationEvent(event, pubkey)) {
+            if (event.kind === 4) {
+              event.content = "Sent a private message.";
+            } else if (event.kind === 1) {
+              event.content = "Mentioned you in an event.";
+            }
           this.notificationSubject.next(event);
         }
       });
