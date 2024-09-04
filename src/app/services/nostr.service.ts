@@ -705,7 +705,6 @@ export class NostrService {
               this.messageSubject.next(customMessage);
               this.processedEventIds.add(event.id);
 
-              console.log(`Successfully processed event with ID: ${event.id}`);
             } else {
               console.warn(`Decrypted message is empty for event ID: ${event.id}`);
             }

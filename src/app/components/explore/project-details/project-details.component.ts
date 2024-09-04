@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { NostrService } from '../../services/nostr.service';
-import { ProjectsService, Project, ProjectStats } from '../../services/projects.service';
-import { PasswordDialogComponent } from '../password-dialog/password-dialog.component';
 import { NostrEvent } from 'nostr-tools';
+import { NostrService } from '../../../services/nostr.service';
+import { Project, ProjectStats, ProjectsService } from '../../../services/projects.service';
 
 @Component({
   selector: 'app-project-details',

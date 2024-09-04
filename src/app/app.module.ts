@@ -21,22 +21,25 @@ import { SettingsComponent } from './components/settings/settings.component';
 import { HelpComponent } from './components/help/help.component';
 import { NotificationsComponent } from './components/notifications/notifications.component';
 import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
-import { MessagesComponent } from './components/messages/messages.component';
+import { ChatComponent } from './components/messages/chat/chat.component';
 import { ExploreComponent } from './components/explore/explore.component';
-import { ProjectDetailsComponent } from './components/project-details/project-details.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ExtensionComponent } from './components/profile/extension/extension.component';
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
 import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
 import { PasswordDialogComponent } from './components/password-dialog/password-dialog.component';
- import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
-import { ChatListComponent } from './components/chat-list/chat-list.component';
+import { MessagesComponent } from './components/messages/messages.component';
 import { NgScrollbarModule } from 'ngx-scrollbar';
+import { ProjectDetailsComponent } from './components/explore/project-details/project-details.component';
+import { UserComponent } from './components/user/user.component';
+import { EventDetailComponent } from './components/events/event-detail/event-detail.component';
+import { EventsComponent } from './components/events/events.component';
 
-   @NgModule({
+@NgModule({
   declarations: [
     AppComponent,
     ProfileComponent,
@@ -48,7 +51,7 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
     HelpComponent,
     NotificationsComponent,
     BookmarksComponent,
-    MessagesComponent,
+    ChatComponent,
     ExploreComponent,
     ProjectDetailsComponent,
     ExtensionComponent,
@@ -57,7 +60,10 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
     PrivatekeyComponent,
     PasswordDialogComponent,
     EditProfileComponent,
-    ChatListComponent
+    MessagesComponent,
+    UserComponent,
+    EventDetailComponent,
+    EventsComponent
   ],
   imports: [
     BrowserModule,
@@ -65,14 +71,14 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
     AppRoutingModule,
     HttpClientModule,
     OverlayscrollbarsModule,
-     MatDialogModule,
-     FormsModule,
-      ReactiveFormsModule,
-       MatFormFieldModule,
-      MatInputModule,
-      FormsModule,
-      NgScrollbarModule
-   ],
+    MatDialogModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    NgScrollbarModule
+  ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],
 })

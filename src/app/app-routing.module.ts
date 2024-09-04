@@ -4,17 +4,17 @@ import { HomeComponent } from './components/home/home.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { ExploreComponent } from './components/explore/explore.component';
-import { MessagesComponent } from './components/messages/messages.component';
+import { ChatComponent } from './components/messages/chat/chat.component';
 import { BookmarksComponent } from './components/bookmarks/bookmarks.component';
 import { NotificationsComponent } from './components/notifications/notifications.component';
 import { HelpComponent } from './components/help/help.component';
-import { ProjectDetailsComponent } from './components/project-details/project-details.component';
 import { ExtensionComponent } from './components/profile/extension/extension.component';
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
 import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
-import { ChatListComponent } from './components/chat-list/chat-list.component';
+import { MessagesComponent } from './components/messages/messages.component';
+import { ProjectDetailsComponent } from './components/explore/project-details/project-details.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -25,11 +25,11 @@ const routes: Routes = [
   { path: 'profile/new', component: NewComponent },
   { path: 'profile/editprofile', component: EditProfileComponent },
 
-  { path: 'messages',component:ChatListComponent},
-
+  { path: 'messages',component:MessagesComponent},
+  { path: 'messages/:pubkey',component:ChatComponent},
+  { path: 'projects',component:ExploreComponent},
   { path: 'projects/:id', component: ProjectDetailsComponent },
   { path: 'explore',component:ExploreComponent},
-  { path: 'messages/:pubkey',component:MessagesComponent},
   { path: 'bookmarks',component:BookmarksComponent},
   { path: 'notifications',component:NotificationsComponent},
   { path: 'settings',component:SettingsComponent},

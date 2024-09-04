@@ -1,45 +1,31 @@
-<section id="page-message" class="h-entry section section-type-page">
+<section id="page-chat" class="h-entry section section-type-page">
   <div class="section-inner">
     <div class="section-main">
       <header class="section-header">
         <div class="main-title-bar">
-           <h1 itemprop="name">
-            <img [src]="recipientMetadata?.picture || 'assets/images/no-image.jpg'"
-                 onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
-                 class="recipient-avatar">
-            <span class="section-title">{{ recipientMetadata?.name || recipientPublicKey }}</span>
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Chat List</span>
           </h1>
         </div>
       </header>
       <div class="e-content article-entry" itemprop="articleBody">
-        <section id="chat-section" class="chat-container h-entry">
-          <div class="chat-main">
-            <div class="chat-messages" #chatMessagesContainer>
-              <ul>
-                <li *ngFor="let msg of messages"
-                [ngClass]="{'sent-message': isSentByUser(msg), 'received-message': !isSentByUser(msg)}"
-                [class.right]="isSentByUser(msg)"
-                [class.left]="!isSentByUser(msg)"
-                [class.ltr]="!isRTL(msg.decryptedMessage)"
-                [class.rtl]="isRTL(msg.decryptedMessage)">
-              {{ msg.decryptedMessage }}
-              <span class="message-timestamp">{{ msg.createdAt | date: 'short' }}</span>
-            </li>
-              </ul>
-
-            </div>
-            <div class="chat-input">
-              <textarea [(ngModel)]="message"
-              [dir]="isRTL(message) ? 'rtl' : 'ltr'"
-              placeholder="Type your message here"></textarea>
-                            <button class="btn-angor" (click)="sendMessage()">Send</button>
-              <button class="btn-angor" (click)="toggleEmojiPicker()">😊</button>
-              <div *ngIf="isEmojiPickerVisible" class="emoji-picker">
-                <span *ngFor="let emoji of customEmojis" (click)="addEmoji(emoji)">{{ emoji }}</span>
+        <div class="chat-list-container project-results">
+          <ul class="chat-list">
+            <li *ngFor="let chat of chatList" (click)="goToChat(chat.pubKey)" class="chat-item project-card">
+              <div class="chat-avatar">
+                <img [src]="chat.metadata?.picture || 'assets/images/no-image.jpg'"
+                     onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
+                     alt="{{ chat.metadata?.name || chat.pubKey }}">
               </div>
-            </div>
-          </div>
-        </section>
+              <div class="chat-info">
+                <strong class="chat-name">{{ chat.metadata?.name || chat.pubKey }}</strong>
+                <p class="chat-message">{{ chat.lastMessage }}</p>
+                <span class="chat-time">{{ chat.lastMessageTime | date:'short' }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
