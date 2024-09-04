@@ -14,9 +14,12 @@
           <div *ngFor="let notification of notifications" class="notification-item">
             <div class="notification-metadata">
               <img *ngIf="notification.metadata?.picture" [src]="notification.metadata?.picture" alt="Sender's Picture" class="sender-picture">
-              <b class="name">{{ notification.metadata?.name || notification.pubkey }}</b> <span class="primary-color"> {{notification.content}} </span>
+              <a [href]="'/profile/' + notification.pubkey">
+                <b class="name">{{ notification.metadata?.name || notification.pubkey }}</b>
+              </a>
+              <span class="primary-color">{{notification.content}}</span>
             </div>
-           </div>
+          </div>
         </div>
       </div>
     </div>

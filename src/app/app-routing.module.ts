@@ -15,6 +15,7 @@ import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
 import { MessagesComponent } from './components/messages/messages.component';
 import { ProjectDetailsComponent } from './components/explore/project-details/project-details.component';
+import { UserComponent } from './components/user/user.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -24,6 +25,9 @@ const routes: Routes = [
   { path: 'profile/menemonic', component: MenemonicComponent },
   { path: 'profile/new', component: NewComponent },
   { path: 'profile/editprofile', component: EditProfileComponent },
+
+  { path: 'profile/:id', component: UserComponent },
+
 
   { path: 'messages',component:MessagesComponent},
   { path: 'messages/:pubkey',component:ChatComponent},

@@ -1,0 +1,75 @@
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-top: 10px;
+  border: 3px solid white;
+}
+
+.profile-details {
+  padding: 20px;
+}
+
+.user-events {
+  margin-top: 20px;
+}
+
+.event {
+  background-color: var(--background-color);
+  border: 1px solid #939393;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.event p {
+  margin: 5px 0;
+  color: var(--neut-L75);
+}
+
+.event strong {
+  color: var(--neut-L75);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  margin-top: 20px;
+}
+
+.loading-spinner {
+  border: 16px solid var(--primary);
+  border-top: 16px solid var(--neut-L90);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}

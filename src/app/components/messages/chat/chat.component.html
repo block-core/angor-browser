@@ -7,7 +7,9 @@
             <img [src]="recipientMetadata?.picture || 'assets/images/no-image.jpg'"
                  onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
                  class="recipient-avatar">
-            <span class="section-title">{{ recipientMetadata?.name || recipientPublicKey }}</span>
+                 <a [href]="'/profile/' + recipientPublicKey">
+                  <span class="section-title">{{ recipientMetadata?.name || recipientPublicKey }}</span>
+                 </a>
           </h1>
         </div>
       </header>
@@ -32,7 +34,7 @@
               <textarea [(ngModel)]="message"
               [dir]="isRTL(message) ? 'rtl' : 'ltr'"
               placeholder="Type your message here"></textarea>
-                            <button class="btn-angor" (click)="sendMessage()">Send</button>
+              <button class="btn-angor" (click)="sendMessage()">Send</button>
               <button class="btn-angor" (click)="toggleEmojiPicker()">😊</button>
               <div *ngIf="isEmojiPickerVisible" class="emoji-picker">
                 <span *ngFor="let emoji of customEmojis" (click)="addEmoji(emoji)">{{ emoji }}</span>

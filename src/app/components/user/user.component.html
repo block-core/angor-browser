@@ -1,1 +1,42 @@
-<p>user works!</p>
+<section id="page-user" class="h-entry section section-type-page">
+  <div class="section-inner">
+    <div class="section-main">
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <div *ngIf="!isLoading && userMetadata" class="profile-container">
+        <!-- User Metadata Display -->
+        <img class="profile-picture" [src]="userMetadata.picture || 'assets/images/no-image.jpg'"
+          onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
+          alt="{{ userMetadata.name || 'User' }}" />
+        <div class="profile-details">
+          <h1 class="section-title">{{ userMetadata.name || 'User' }}</h1>
+          <p>{{ userMetadata.about }}</p>
+          <p *ngIf="userMetadata.website">
+            <strong>Website:</strong>
+            <a [href]="userMetadata.website" target="_blank">{{ userMetadata.website }}</a>
+          </p>
+
+          <button class="btn-angor" [routerLink]="'/messages/' + pubkey">
+            Chat with {{ userMetadata.name || 'User' }}
+          </button>
+        </div>
+
+        <!-- User Events Display -->
+        <div class="user-events">
+          <h2>User Events</h2>
+          <div *ngFor="let event of userEvents" class="event">
+            <p><strong>Content:</strong> {{ event.content }}</p>
+            <p><strong>Created At:</strong> {{ event.created_at * 1000 | date:'short' }}</p>
+            <p><strong>Event ID:</strong> {{ event.id }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!isLoading && errorMessage" class="error-message">
+        <p>{{ errorMessage }}</p>
+      </div>
+    </div>
+  </div>
+</section>
