@@ -71,7 +71,7 @@
     height: 50px;
     border-radius: 50%;
     margin-right: 10px;
-    border: 2px solid #007bff;
+    border: 2px solid var(--primary);
   }
 
   .notification-item p {

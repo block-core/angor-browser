@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NostrService } from '../../services/nostr.service';
 import { IndexerService } from '../../services/indexer.service';
@@ -26,7 +26,8 @@ export class SettingsComponent implements OnInit {
     private nostrService: NostrService,
     private relayService: RelayService,
     public dialog: MatDialog,
-    private indexerService: IndexerService
+    private indexerService: IndexerService,
+    private cdRef: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +79,7 @@ export class SettingsComponent implements OnInit {
 
   loadRelays() {
     this.relays = this.relayService.getRelays();
+    this.cdRef.detectChanges();
   }
 
   openAddRelayModal() {

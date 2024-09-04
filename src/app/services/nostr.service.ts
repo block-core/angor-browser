@@ -488,16 +488,6 @@ export class NostrService {
 
       this.relayService.subscribeToFilter(filter);
 
-      // Subscribe to the events of the people you follow
-      this.getFollowing(pubkey).then((following) => {
-        const followingPubkeys = following.map((f) => f.nostrPubKey);
-        const followingFilter: Filter = {
-          kinds: [1],
-          authors: followingPubkeys,
-          limit: 50
-        };
-        this.relayService.subscribeToFilter(followingFilter);
-      });
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NostrEvent } from 'nostr-tools/pure';
 import { NostrService } from '../../services/nostr.service';
@@ -35,7 +35,8 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   constructor(
     private nostrService: NostrService,
     private route: ActivatedRoute,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdRef: ChangeDetectorRef
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -72,6 +73,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
   ngAfterViewChecked() {
     if (!this.isUserScrolling) {
+      this.cdRef.detectChanges();
       this.scrollToBottom();
     }
   }
@@ -81,6 +83,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
       setTimeout(() => {
         const container = this.chatMessagesContainer.nativeElement;
         container.scrollTop = container.scrollHeight;
+        this.cdRef.detectChanges();
       }, 100);
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
@@ -95,7 +98,6 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
       this.nostrService.subscribeToKind4Messages(publicKey, this.recipientPublicKey, useExtension, this.decryptedSenderPrivateKey);
 
       this.nostrService.getMessageStream().subscribe(({ decryptedMessage, isSentByUser, createdAt }) => {
-        console.log('Message received:', decryptedMessage);
         this.messages.push({ decryptedMessage, isSentByUser, createdAt });
         this.messages.sort((a, b) => a.createdAt - b.createdAt);
         if (!this.isUserScrolling) {
@@ -132,7 +134,6 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
 
         if (password) {
           this.decryptedSenderPrivateKey = await this.nostrService.decryptPrivateKeyWithPassword(encryptedSenderPrivateKey, password);
-          console.log('Decrypted Sender Private Key:', this.decryptedSenderPrivateKey);
         } else {
           console.warn('Password was not provided.');
         }

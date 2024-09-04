@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NostrService } from '../../services/nostr.service';
 import { NostrEvent } from 'nostr-tools';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -18,7 +18,7 @@ export class HomeComponent implements OnInit {
   public eventsWithMetadata: EventWithMetadata[] = [];
   private processedEventIds: Set<string> = new Set(); // Track processed event IDs
 
-  constructor(private nostrService: NostrService, private sanitizer: DomSanitizer) {}
+  constructor(private nostrService: NostrService, private sanitizer: DomSanitizer, private cdRef: ChangeDetectorRef ) {}
 
   ngOnInit(): void {
     const pubkey = this.nostrService.getUserPublicKey();
@@ -30,6 +30,7 @@ export class HomeComponent implements OnInit {
           const metadata = await this.nostrService.fetchMetadata(event.pubkey);
           const safeContent = this.sanitizer.bypassSecurityTrustHtml(this.parseContent(event.content));
           this.eventsWithMetadata.unshift({ event, metadata, safeContent }); // Add new events with metadata at the top
+          this.cdRef.detectChanges(); 
         }
       });
     }
