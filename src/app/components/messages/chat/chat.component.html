@@ -35,6 +35,8 @@
               [dir]="isRTL(message) ? 'rtl' : 'ltr'"
               placeholder="Type your message here"></textarea>
               <button class="btn-angor" (click)="sendMessage()">Send</button>
+              <button class="btn-angor" (click)="toggleSpeechRecognition()">🎤</button>
+
               <button class="btn-angor" (click)="toggleEmojiPicker()">😊</button>
 
               <div class="emoji-picker-container">

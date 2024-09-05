@@ -1,5 +1,6 @@
 import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { EmojiService } from '../../services/emoji.service';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-emoji-picker',
@@ -11,6 +12,7 @@ export class EmojiPickerComponent implements OnInit {
   public emojiSearch: string = '';
   public emojiCategories: { [key: string]: { name: string, emoji: string }[] } = {};
   public loading: boolean = true;
+  private searchSubject = new Subject<string>();
 
   constructor(private emojiService: EmojiService) {}
 
@@ -25,6 +27,14 @@ export class EmojiPickerComponent implements OnInit {
         this.loading = false;
       }
     );
+
+    // Subscribe to search input changes with debounce
+    this.searchSubject.pipe(
+      debounceTime(300), // Wait 300ms after the last event before emitting
+      distinctUntilChanged() // Only emit when the current value is different than the last
+    ).subscribe((searchTerm) => {
+      this.emojiSearch = searchTerm;
+    });
   }
 
   formatEmojis(data: any): { [key: string]: { name: string, emoji: string }[] } {
@@ -60,7 +70,10 @@ export class EmojiPickerComponent implements OnInit {
 
   selectEmoji(emoji: string): void {
     this.emojiSelected.emit(emoji);
-    console.log(emoji)
     this.emojiSearch = '';
+  }
+
+  onSearchChange(searchValue: string): void {
+    this.searchSubject.next(searchValue); // Emit search value to debounce
   }
 }

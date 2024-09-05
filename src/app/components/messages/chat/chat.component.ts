@@ -27,7 +27,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   private decryptedSenderPrivateKey: string = '';
   public isEmojiPickerVisible = false;
   public recipientMetadata: any;
-
+  public recognition: any;
+  public isListening = false;
 
   constructor(
     private nostrService: NostrService,
@@ -39,6 +40,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   async ngOnInit(): Promise<void> {
     try {
       await this.initializeKeys();
+      this.initializeSpeechRecognition();
+
       this.route.paramMap.subscribe((params) => {
         this.recipientPublicKey = params.get('pubkey') || '';
         this.fetchRecipientMetadata();
@@ -91,6 +94,40 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       }, 100);
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
+    }
+  }
+
+
+  initializeSpeechRecognition() {
+    const { webkitSpeechRecognition }: any = window;
+    this.recognition = new webkitSpeechRecognition();
+    this.recognition.lang = 'en-US';
+    this.recognition.continuous = false;
+    this.recognition.interimResults = false;
+
+    this.recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      this.message += transcript;
+      this.cdRef.detectChanges();
+    };
+
+    this.recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event);
+      this.isListening = false;
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+    };
+  }
+
+  toggleSpeechRecognition() {
+    if (this.isListening) {
+      this.recognition.stop();
+      this.isListening = false;
+    } else {
+      this.recognition.start();
+      this.isListening = true;
     }
   }
 
