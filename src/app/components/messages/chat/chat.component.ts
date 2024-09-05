@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NostrEvent } from 'nostr-tools/pure';
 import { NostrService } from '../../../services/nostr.service';
 import { MatDialog } from '@angular/material/dialog';
-import { PasswordDialogComponent } from '../../password-dialog/password-dialog.component';
+import { PasswordDialogComponent } from '../../../shared/password-dialog/password-dialog.component';
 
 interface CustomMessageEvent {
   isSentByUser: boolean;
@@ -28,9 +28,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   public isEmojiPickerVisible = false;
   public recipientMetadata: any;
 
-  public customEmojis: string[] = [
-    '😀', '😁', '😂', '🥰', '😎', '🤩', '😢', '😡', '👍', '👎', '🙏', '👏', '❤️', '💔', '🎉', '🔥', '🌟', '🍀', '🎁', '⚽'
-  ];
 
   constructor(
     private nostrService: NostrService,
@@ -63,6 +60,13 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       console.error('Error during initialization:', error);
     }
   }
+
+
+  onEmojiSelected(emoji: string): void {
+    this.message += emoji;
+    this.isEmojiPickerVisible = false;
+  }
+
   private async fetchRecipientMetadata(): Promise<void> {
     try {
       this.recipientMetadata = await this.nostrService.fetchMetadata(this.recipientPublicKey);

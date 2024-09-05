@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NostrService } from '../../services/nostr.service';
 import { Router } from '@angular/router';
-import { PasswordDialogComponent } from '../password-dialog/password-dialog.component';
+import { PasswordDialogComponent } from '../../shared/password-dialog/password-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { NostrService } from '../../../services/nostr.service';
-import { PasswordDialogComponent } from '../../password-dialog/password-dialog.component';
+import { PasswordDialogComponent } from '../../../shared/password-dialog/password-dialog.component';
 import { NostrEvent } from 'nostr-tools';
 
 @Component({

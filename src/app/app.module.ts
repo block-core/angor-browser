@@ -28,7 +28,7 @@ import { ExtensionComponent } from './components/profile/extension/extension.com
 import { NewComponent } from './components/profile/new/new.component';
 import { MenemonicComponent } from './components/profile/menemonic/menemonic.component';
 import { PrivatekeyComponent } from './components/profile/privatekey/privatekey.component';
-import { PasswordDialogComponent } from './components/password-dialog/password-dialog.component';
+import { PasswordDialogComponent } from './shared/password-dialog/password-dialog.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { EditProfileComponent } from './components/profile/editprofile/editprofile.component';
@@ -38,6 +38,8 @@ import { ProjectDetailsComponent } from './components/explore/project-details/pr
 import { UserComponent } from './components/user/user.component';
 import { EventDetailComponent } from './components/events/event-detail/event-detail.component';
 import { EventsComponent } from './components/events/events.component';
+import { EmojiPickerComponent } from './shared/emoji-picker/emoji-picker.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   declarations: [
@@ -63,7 +65,8 @@ import { EventsComponent } from './components/events/events.component';
     MessagesComponent,
     UserComponent,
     EventDetailComponent,
-    EventsComponent
+    EventsComponent,
+    EmojiPickerComponent
   ],
   imports: [
     BrowserModule,
@@ -72,12 +75,12 @@ import { EventsComponent } from './components/events/events.component';
     HttpClientModule,
     OverlayscrollbarsModule,
     MatDialogModule,
-    FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    FormsModule,
-    NgScrollbarModule
+    NgScrollbarModule,
+    ScrollingModule,
+
   ],
   bootstrap: [AppComponent],
   providers: [provideHttpClient(withFetch()), provideAnimationsAsync()],
