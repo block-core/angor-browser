@@ -21,6 +21,8 @@ export class SettingsComponent implements OnInit {
   newIndexerUrlTestnet: string = '';
   indexersMainnet: Array<{ url: string; primary: boolean }> = [];
   indexersTestnet: Array<{ url: string; primary: boolean }> = [];
+  selectedNetwork: 'mainnet' | 'testnet' = 'testnet';
+
 
   constructor(
     private nostrService: NostrService,
@@ -31,8 +33,13 @@ export class SettingsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadNetwork();
     this.loadRelays();
     this.loadIndexers();
+  }
+
+  loadNetwork() {
+     this.selectedNetwork = this.indexerService.getNetwork();
   }
 
   loadIndexers() {
@@ -120,5 +127,9 @@ export class SettingsComponent implements OnInit {
   removeAllCustomRelays(): void {
     this.relayService.removeAllCustomRelays();
     this.loadRelays();
+  }
+  setNetwork(network: 'mainnet' | 'testnet'): void {
+    this.selectedNetwork = network;
+    this.indexerService.setNetwork(network);
   }
 }

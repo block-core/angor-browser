@@ -32,20 +32,26 @@ export class ProjectsService {
   private projects: Project[] = [];
   private noMoreProjects = false;
   private totalProjectsFetched = false;
+  selectedNetwork: 'mainnet' | 'testnet' = 'testnet';
 
   constructor(
     private http: HttpClient,
     private indexerService: IndexerService
 
-  ) {}
+  ) {
+    this.loadNetwork();
+  }
 
+  loadNetwork() {
+    this.selectedNetwork = this.indexerService.getNetwork();
+  }
   async fetchProjects(): Promise<Project[]> {
     if (this.loading || this.noMoreProjects) {
       return [];
     }
 
     this.loading = true;
-    const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
+    const indexerUrl = this.indexerService.getPrimaryIndexer(this.selectedNetwork);
     const url = this.totalProjectsFetched
       ? `${indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.limit}`
       : `${indexerUrl}api/query/Angor/projects?limit=${this.limit}`;
@@ -102,7 +108,7 @@ export class ProjectsService {
 
 
   fetchProjectStats(projectIdentifier: string): Observable<ProjectStats> {
-    const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
+    const indexerUrl = this.indexerService.getPrimaryIndexer(this.selectedNetwork);
     const url = `${indexerUrl}api/query/Angor/projects/${projectIdentifier}/stats`;
     console.log(`Fetching project stats from URL: ${url}`);
 
@@ -118,7 +124,7 @@ export class ProjectsService {
   }
 
   fetchProjectDetails(projectIdentifier: string): Observable<Project> {
-    const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
+    const indexerUrl = this.indexerService.getPrimaryIndexer(this.selectedNetwork);
     const url = `${indexerUrl}api/query/Angor/projects/${projectIdentifier}`;
     console.log(`Fetching project details from URL: ${url}`);
 

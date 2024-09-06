@@ -10,6 +10,8 @@ export class IndexerService {
   private mainnetPrimaryIndexerKey = 'mainnetPrimaryIndexer';
   private testnetPrimaryIndexerKey = 'testnetPrimaryIndexer';
 
+  private networkStorageKey = 'selectedNetwork';
+
   private defaultMainnetIndexer = 'https://btc.indexer.angor.io/';
   private defaultTestnetIndexer = 'https://tbtc.indexer.angor.io/';
 
@@ -76,5 +78,12 @@ export class IndexerService {
     const primaryKey = network === 'mainnet' ? this.mainnetPrimaryIndexerKey : this.testnetPrimaryIndexerKey;
     localStorage.removeItem(storageKey);
     localStorage.removeItem(primaryKey);
+  }
+  setNetwork(network: 'mainnet' | 'testnet'): void {
+    localStorage.setItem(this.networkStorageKey, network);
+  }
+
+  getNetwork(): 'mainnet' | 'testnet' {
+    return (localStorage.getItem(this.networkStorageKey) as 'mainnet' | 'testnet') || 'testnet';
   }
 }
