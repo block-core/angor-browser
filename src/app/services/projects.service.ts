@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { IndexerService } from './indexer.service';
 import { catchError } from 'rxjs/operators';
 import { of, Observable } from 'rxjs';
+import { IndexerService } from './indexer.service';
 
 export interface Project {
   founderKey: string;
@@ -36,71 +36,38 @@ export class ProjectsService {
   constructor(
     private http: HttpClient,
     private indexerService: IndexerService
+
   ) {}
 
-  private async ensureTotalProjectsFetched(): Promise<void> {
-    if (!this.totalProjectsFetched) {
-      await this.getTotalProjectsCount();
-      this.totalProjectsFetched = true;
-      this.offset = Math.max(this.totalProjects - this.limit, 0);
-    }
-  }
-
-  private async getTotalProjectsCount(): Promise<void> {
-    const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
-    if (!indexerUrl) {
-      throw new Error('No primary indexer found for testnet');
-    }
-
-    const url = `${indexerUrl}api/query/Angor/projects?offset=0&limit=1`;
-
-    try {
-      const response = await this.http
-        .get<Project[]>(url, { observe: 'response' })
-        .toPromise();
-      if (response && response.headers) {
-        const paginationTotal = response.headers.get('pagination-total');
-        this.totalProjects = paginationTotal ? +paginationTotal : 0;
-        console.log(`Total projects: ${this.totalProjects}`);
-      }
-    } catch (error) {
-      console.error('Error fetching total project count:', error);
-    }
-  }
-
   async fetchProjects(): Promise<Project[]> {
-    await this.ensureTotalProjectsFetched();
-
     if (this.loading || this.noMoreProjects) {
       return [];
     }
 
     this.loading = true;
     const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
-    if (!indexerUrl) {
-      this.loading = false;
-      throw new Error('No primary indexer found for testnet');
-    }
+    const url = this.totalProjectsFetched
+      ? `${indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.limit}`
+      : `${indexerUrl}api/query/Angor/projects?limit=${this.limit}`;
 
-    if (this.projects.length >= this.totalProjects || this.offset < 0) {
-      this.noMoreProjects = true;
-      this.loading = false;
-      return [];
-    }
-
-    const url = `${indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.limit}`;
     console.log(`Fetching projects from URL: ${url}`);
 
     try {
-      const newProjects = await this.http
-        .get<Project[]>(url)
-        .pipe(
-          catchError((error) => {
-            console.error('Error fetching projects:', error);
-            return of([]);
-          })
-        )
+      const response = await this.http
+        .get<Project[]>(url, { observe: 'response' })
         .toPromise();
+
+      if (!this.totalProjectsFetched && response && response.headers) {
+        const paginationTotal = response.headers.get('pagination-total');
+        this.totalProjects = paginationTotal ? +paginationTotal : 0;
+        console.log(`Total projects: ${this.totalProjects}`);
+        this.totalProjectsFetched = true;
+
+        this.offset = Math.max(this.totalProjects - this.limit, 0);
+      }
+
+      const newProjects = response?.body || [];
+      console.log('New projects received:', newProjects);
 
       if (!newProjects || newProjects.length === 0) {
         this.noMoreProjects = true;
@@ -110,13 +77,14 @@ export class ProjectsService {
           (newProject) =>
             !this.projects.some(
               (existingProject) =>
-                existingProject.projectIdentifier ===
-                newProject.projectIdentifier
+                existingProject.projectIdentifier === newProject.projectIdentifier
             )
         );
 
         if (uniqueNewProjects.length > 0) {
           this.projects = [...this.projects, ...uniqueNewProjects];
+          console.log(`${uniqueNewProjects.length} new projects added`);
+
           this.offset = Math.max(this.offset - this.limit, 0);
           return uniqueNewProjects;
         } else {
@@ -132,13 +100,9 @@ export class ProjectsService {
     }
   }
 
+
   fetchProjectStats(projectIdentifier: string): Observable<ProjectStats> {
     const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
-    if (!indexerUrl) {
-      console.error('No primary indexer found for testnet');
-      return of({} as ProjectStats);
-    }
-
     const url = `${indexerUrl}api/query/Angor/projects/${projectIdentifier}/stats`;
     console.log(`Fetching project stats from URL: ${url}`);
 
@@ -155,11 +119,6 @@ export class ProjectsService {
 
   fetchProjectDetails(projectIdentifier: string): Observable<Project> {
     const indexerUrl = this.indexerService.getPrimaryIndexer('testnet');
-    if (!indexerUrl) {
-      console.error('No primary indexer found for testnet');
-      return of({} as Project);
-    }
-
     const url = `${indexerUrl}api/query/Angor/projects/${projectIdentifier}`;
     console.log(`Fetching project details from URL: ${url}`);
 
@@ -178,11 +137,10 @@ export class ProjectsService {
     return this.projects;
   }
 
-  async resetProjects(): Promise<void> {
-    await this.ensureTotalProjectsFetched();
-
+  resetProjects(): void {
     this.projects = [];
     this.noMoreProjects = false;
-    this.offset = Math.max(this.totalProjects - this.limit, 0);
+    this.offset = 0;
+    this.totalProjectsFetched = false;
   }
 }
