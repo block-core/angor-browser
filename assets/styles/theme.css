@@ -348,7 +348,7 @@ body {
 }
 #main-grid {
   display: grid;
-  max-width: 1200px;
+  max-width: 1220px;
   min-height: 100vh;
   grid-template-rows: auto 1fr auto;
   margin: auto;
@@ -385,10 +385,11 @@ body {
 }
 @media screen and (max-width: 767px) {
   #main-grid {
-    column-gap: 0;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+   column-gap: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
   }
+
   #main-grid #sidebar-wrapper {
     grid-row: 3;
     grid-column-start: 1;
@@ -407,6 +408,9 @@ body {
      column-gap: 0;
      grid-template-columns: 1fr;
      grid-template-rows: auto auto auto;
+  }
+  #sidebar {
+     height: 100%;
   }
   #main-grid #sidebar-wrapper {
     grid-row: 3;
@@ -1724,6 +1728,7 @@ a.section-title:active {
     text-align: left;
     padding-right: 20px;
   }
+
 }
 @media screen and (min-width: 1024px) {
   #section-nav-older {
@@ -1731,6 +1736,11 @@ a.section-title:active {
     text-align: right;
     padding-left: 20px;
   }
+}
+@media screen and (min-width: 1024px) {
+  #sidebar {
+    width: 100% !important;
+   }
 }
 .section-nav-caption {
   text-transform: uppercase;
@@ -2719,8 +2729,7 @@ input[type="range"] {
   transition: background 0.15s ease-out;
 }
 #sidebar {
-  width: 100% !important;
-  height: 100%;
+   height: 100%;
 }
 #sidebar .sticky {
   position: sticky;
