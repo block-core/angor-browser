@@ -45,8 +45,9 @@ export class NotificationService {
       this.nostrService.getNotificationStream().subscribe((notification) => {
         const notificationWithMetadata: NostrEventWithMetadata = { ...notification };
 
-        // Display all notifications
-        this.notifications.unshift(notificationWithMetadata);
+        // Add the notification to the array and sort by created_at to display newest first
+        this.notifications.push(notificationWithMetadata);
+        this.sortNotificationsByDate();
 
         // Fetch metadata for each notification in parallel
         this.fetchMetadataForNotification(notificationWithMetadata);
@@ -86,5 +87,10 @@ export class NotificationService {
 
   public getNotifications(): NostrEventWithMetadata[] {
     return this.notifications;
+  }
+
+  // Sort notifications by created_at in descending order (newest first)
+  private sortNotificationsByDate(): void {
+    this.notifications.sort((a, b) => b.created_at - a.created_at);
   }
 }

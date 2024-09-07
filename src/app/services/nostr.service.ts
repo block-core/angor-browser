@@ -500,18 +500,28 @@ export class NostrService {
       const filter: Filter = {
         kinds: [1, 4], // Kind 1 for text notes, kind 4 for encrypted direct messages
         '#p': [pubkey], // Events tagged with the user's public key
-        limit:50
+        limit: 50
       };
 
       this.relayService.subscribeToFilter(filter);
 
       this.relayService.getEventStream().subscribe((event) => {
         if (this.isNotificationEvent(event, pubkey)) {
-            if (event.kind === 4) {
-              event.content = "Sent a private message.";
-            } else if (event.kind === 1) {
-              event.content = "Mentioned you in an event.";
-            }
+          // Get the UNIX timestamp from event and convert it to readable date
+          const eventTimestamp = event.created_at * 1000; // Convert seconds to milliseconds
+          const eventDate = new Date(eventTimestamp);
+
+          // Format the date and time (example: 2024-09-07 14:30)
+          const formattedDate = eventDate.toLocaleString();
+
+          // Add message based on the kind of the event
+          if (event.kind === 4) {
+            event.content = `Sent a private message at ${formattedDate}.`;
+          } else if (event.kind === 1) {
+            event.content = `Mentioned you in an event at ${formattedDate}.`;
+          }
+
+          // Push the updated event to the notificationSubject
           this.notificationSubject.next(event);
         }
       });
@@ -527,9 +537,11 @@ export class NostrService {
   getNotificationStream() {
     return this.notificationSubject.asObservable();
   }
+
   getEventStream() {
     return this.relayService.getEventStream();
   }
+
   //Nostr Extension Interactions=======================================================
   async getNostrPublicKeyFromExtension() {
     const gt = globalThis as any;
