@@ -48,8 +48,8 @@
   }
 
   .notification-item {
-    background-color: var(--background-color);
-    border-radius: 10px;
+    background: var(--input-field);
+        border-radius: 10px;
     padding: 15px;
     margin-bottom: 15px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -57,7 +57,7 @@
   }
 
   .notification-item:hover {
-    background-color: var(--background-color);
+    background: var(--input-field-hover);
   }
 
   .notification-metadata {
