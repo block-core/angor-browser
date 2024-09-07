@@ -23,9 +23,17 @@
         </menu>
         <div id="nav-dropdown" [class.hidden]="isDropdownHidden">
           <div id="dropdown-link-list">
-            <a class="nav-dropdown-link" routerLink="/profile">Profile</a>
+            <a class="nav-dropdown-link" routerLink="/" (click)="toggleDropdown()">Home</a>
+            <a class="nav-dropdown-link" routerLink="/explore" (click)="toggleDropdown()">Explore</a>
+            <a class="nav-dropdown-link" routerLink="/messages" (click)="toggleDropdown()">Messages</a>
+            <a class="nav-dropdown-link" routerLink="/bookmarks" (click)="toggleDropdown()">Bookmarks</a>
+            <a class="nav-dropdown-link" routerLink="/notifications" (click)="toggleDropdown()">Notifications</a>
+            <a class="nav-dropdown-link" routerLink="/settings" (click)="toggleDropdown()">Settings</a>
+            <a class="nav-dropdown-link" routerLink="/help" (click)="toggleDropdown()">Help</a>
           </div>
         </div>
+
+
       </div>
       <div id="sidebar-wrapper">
         <div id="sidebar">
