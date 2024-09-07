@@ -62,3 +62,10 @@
   font-size: 1.25rem;
   margin: 20px 0;
 }
+.project-details {
+  word-break: break-word;
+  white-space: normal;
+}
+.project-item {
+  overflow-wrap: break-word;
+}
