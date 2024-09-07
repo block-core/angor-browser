@@ -14,13 +14,13 @@
           <ul>
             <li *ngFor="let project of projects" (click)="goToProjectDetails(project)" class="project-item">
               <div class="project-thumbnail">
-                <img [src]="project.picture || 'assets/images/no-image.jpg'"
+                <img [src]="project.picture?.toString() || '/assets/images/no-image.jpg'"
                   onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
                   alt="{{ project.displayName || 'Project' }}" />
               </div>
               <div class="project-details">
-                <h3>{{ project.displayName || "Unknown Project" }}</h3>
-                <p>{{ project.nostrPubKey }}</p>
+                <h3>{{ project.displayName || project.nostrPubKey }}</h3>
+                <p>{{ project.about!| truncate:100 }}</p>
               </div>
             </li>
           </ul>

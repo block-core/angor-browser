@@ -8,6 +8,7 @@ interface Project {
   projectIdentifier:string;
   nostrPubKey: string;
   displayName?: string;
+  about?: string;
   picture?: string;
 }
 
@@ -103,6 +104,7 @@ interface Project {
 
   updateProjectMetadata(project: Project, metadata: any): void {
     project.displayName = metadata.name;
+    project.about = metadata.about;
     project.picture = metadata.picture;
   }
   @HostListener('window:scroll', [])

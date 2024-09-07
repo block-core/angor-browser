@@ -40,6 +40,7 @@ import { EventDetailComponent } from './components/events/event-detail/event-det
 import { EventsComponent } from './components/events/events.component';
 import { EmojiPickerComponent } from './shared/emoji-picker/emoji-picker.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { TruncatePipe } from './shared/truncate.pipe';
 
 @NgModule({
   declarations: [
@@ -66,7 +67,8 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     UserComponent,
     EventDetailComponent,
     EventsComponent,
-    EmojiPickerComponent
+    EmojiPickerComponent,
+    TruncatePipe
   ],
   imports: [
     BrowserModule,
