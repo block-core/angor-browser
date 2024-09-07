@@ -95,3 +95,11 @@
     max-width: 100%;
   }
 }
+.chat-name,
+.chat-message {
+  word-break: break-word;
+  white-space: normal;
+}
+.chat-item {
+  overflow-wrap: break-word;
+}
