@@ -1,0 +1,32 @@
+   .notifications-link-text{
+    display: flex;
+    align-items: center;
+  }
+  .notifications-link-text span{
+    margin-left: 10px;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  #main-grid {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+  }
+
+  #content-body , #sidebar , #nav{
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+  #footer{
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  #footer-wrapper {
+    grid-row: 3;
+    width: 100%;
+  }
+
+

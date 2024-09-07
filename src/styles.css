@@ -133,12 +133,12 @@ body.dialog-open {
   overflow: hidden;
 }
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 3px;
   background-color: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(87, 87, 87, 0.5);
+  background-color: rgba(55, 55, 55, 0.5);
   border-radius: 5px;
 }
 
