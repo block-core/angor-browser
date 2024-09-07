@@ -66,6 +66,7 @@
     --text-on-light: oklch(0.25 0.02 var(--primary-hue));
     --pagenav-curr-text: oklch(0.25 0.02 var(--primary-hue));
     --input-field: oklch(0.2 0.02 var(--primary-hue));
+    --input-field-hover: oklch(0.3 0.03 var(--primary-hue));
     --primary-btn-text: oklch(0.25 0.02 var(--primary-hue));
     --enter-btn-bg: oklch(0.2 0.02 var(--primary-hue));
     --enter-btn-hover: oklch(0.3 0.03 var(--primary-hue));
@@ -159,6 +160,7 @@
     --text-on-light: oklch(0.55 0.12 var(--primary-hue));
     --color-picker-range: oklch(0.95 0.02 var(--primary-hue));
     --input-field: oklch(0.98 0.005 var(--primary-hue));
+    --input-field-hover: oklch(0.95 0.02 var(--primary-hue));
     --enter-btn-bg: oklch(0.98 0.005 var(--primary-hue));
     --enter-btn-hover: oklch(0.96 0.015 var(--primary-hue));
     --enter-btn-active: oklch(0.9 0.03 var(--primary-hue));
