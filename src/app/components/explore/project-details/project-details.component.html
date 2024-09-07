@@ -7,20 +7,37 @@
 
       <div *ngIf="!isLoading && selectedProject" class="profile-container">
         <!-- Project Metadata Display -->
-        <img class="profile-banner" [src]="selectedProjectMetadata?.banner || 'assets/images/no-banner.jpg'"
+        <img
+          class="profile-banner"
+          [src]="
+            selectedProjectMetadata?.banner || 'assets/images/no-banner.jpg'
+          "
           onerror="this.onerror=null; this.src='assets/images/no-banner.jpg';"
-          alt="{{ selectedProjectMetadata?.name || 'Project' }}" />
-        <img class="profile-picture" [src]="selectedProjectMetadata?.picture || 'assets/images/no-image.jpg'"
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
+        />
+        <img
+          class="profile-picture"
+          [src]="
+            selectedProjectMetadata?.picture || 'assets/images/no-image.jpg'
+          "
           onerror="this.onerror=null; this.src='assets/images/no-image.jpg';"
-          alt="{{ selectedProjectMetadata?.name || 'Project' }}" />
+          alt="{{ selectedProjectMetadata?.name || 'Project' }}"
+        />
         <div class="profile-details">
           <div class="main-title-bar">
             <h1 class="p-name section-title" itemprop="headline name">
-              {{ selectedProjectMetadata?.name || selectedProject.projectIdentifier }}
+              {{
+                selectedProjectMetadata?.name ||
+                  selectedProject.projectIdentifier
+              }}
             </h1>
           </div>
           <div *ngIf="isLoggedIn" class="chat-button-container">
-             <button *ngIf="selectedProjectMetadata" class="btn-angor" (click)="navigateToMessages()">
+            <button
+              *ngIf="selectedProjectMetadata"
+              class="btn-angor"
+              (click)="navigateToMessages()"
+            >
               Chat with Founder
             </button>
           </div>
@@ -36,31 +53,103 @@
             </p>
           </div>
         </div>
-
-        <!-- Project Stats Display -->
-        <div class="project-stats">
-          <h1 class="p-name section-title">Project Stats</h1>
-          <p><strong>Investor Count:</strong> {{ selectedProjectStats?.investorCount }}</p>
-          <p><strong>Amount Invested:</strong> {{ selectedProjectStats?.amountInvested }}</p>
-          <p><strong>Amount Spent by Founder:</strong> {{ selectedProjectStats?.amountSpentSoFarByFounder }}</p>
-          <p><strong>Amount in Penalties:</strong> {{ selectedProjectStats?.amountInPenalties }}</p>
-          <p><strong>Penalty Count:</strong> {{ selectedProjectStats?.countInPenalties }}</p>
-        </div>
-
-        <!-- Project Details Display -->
-        <p><strong>Founder Key:</strong> {{ selectedProject.founderKey }}</p>
-        <p><strong>Nostr Public Key:</strong> {{ selectedProject.nostrPubKey }}</p>
-        <p><strong>Project Identifier:</strong> {{ selectedProject.projectIdentifier }}</p>
-        <p><strong>Created On Block:</strong> {{ selectedProject.createdOnBlock }}</p>
-        <p><strong>Transaction ID:</strong> {{ selectedProject.trxId }}</p>
-        <p><strong>Total Investments Count:</strong> {{ selectedProject.totalInvestmentsCount }}</p>
-
       </div>
-
-
-
       <div *ngIf="!isLoading && errorMessage" class="error-message">
         <p>{{ errorMessage }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Project Stats Section -->
+<section
+  id="project-stats-section"
+  class="h-entry section section-type-page mb-16"
+>
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Project Stats</span>
+          </h1>
+        </div>
+      </header>
+      <div class="project-stats">
+        <div class="stats-item">
+          <strong>
+            Investor Count:</strong
+          >
+          <span>{{ selectedProjectStats?.investorCount }}</span>
+        </div>
+        <div class="stats-item">
+          <strong>
+            Amount Invested:</strong>
+          <span>{{ selectedProjectStats?.amountInvested }}</span>
+        </div>
+        <div class="stats-item">
+          <strong>
+            Amount Spent by Founder:</strong>
+          <span>{{ selectedProjectStats?.amountSpentSoFarByFounder }}</span>
+        </div>
+        <div class="stats-item">
+          <strong
+            >Amount in
+            Penalties:</strong
+          >
+          <span>{{ selectedProjectStats?.amountInPenalties }}</span>
+        </div>
+        <div class="stats-item">
+          <strong><i class="fas fa-gavel"></i> Penalty Count:</strong>
+          <span>{{ selectedProjectStats?.countInPenalties }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Project Details Section -->
+<section
+  id="project-details-section"
+  class="h-entry section section-type-page mb-16"
+>
+  <div class="section-inner">
+    <div class="section-main">
+      <header class="section-header">
+        <div class="main-title-bar">
+          <div class="main-title-dot"></div>
+          <h1 itemprop="name">
+            <span class="section-title">Project Details</span>
+          </h1>
+        </div>
+      </header>
+      <!-- Project Details Display -->
+      <div class="project-details">
+        <div class="details-item">
+          <strong><i class="fas fa-key"></i> Founder Key:</strong>
+          <span>{{ selectedProject?.founderKey }}</span>
+        </div>
+        <div class="details-item">
+          <strong><i class="fas fa-key"></i> Nostr Public Key:</strong>
+          <span>{{ selectedProject?.nostrPubKey }}</span>
+        </div>
+        <div class="details-item">
+          <strong><i class="fas fa-hashtag"></i> Project Identifier:</strong>
+          <span>{{ selectedProject?.projectIdentifier }}</span>
+        </div>
+        <div class="details-item">
+          <strong><i class="fas fa-calendar-alt"></i> Created On Block:</strong>
+          <span>{{ selectedProject?.createdOnBlock }}</span>
+        </div>
+        <div class="details-item">
+          <strong><i class="fas fa-receipt"></i> Transaction ID:</strong>
+          <span>{{ selectedProject?.trxId }}</span>
+        </div>
+        <div class="details-item">
+          <strong><i class="fas fa-list"></i> Total Investments Count:</strong>
+          <span>{{ selectedProject?.totalInvestmentsCount }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -81,23 +170,29 @@
         <div *ngFor="let event of events" class="event">
           <div class="event-content">
             <p><strong>Event Content:</strong> {{ event.content }}</p>
-            <p><strong>Created At:</strong> {{ event.created_at * 1000 | date:'short' }}</p>
+            <p>
+              <strong>Created At:</strong>
+              {{ event.created_at * 1000 | date : "short" }}
+            </p>
             <p><strong>Event ID:</strong> {{ event.id }}</p>
           </div>
         </div>
       </div>
 
-
-
       <div class="comment-section">
         <div *ngFor="let comment of comments" class="comment">
           <p><strong>Content:</strong> {{ comment.content }}</p>
-          <p><strong>Created At:</strong> {{ comment.created_at * 1000 | date:'short' }}</p>
+          <p>
+            <strong>Created At:</strong>
+            {{ comment.created_at * 1000 | date : "short" }}
+          </p>
           <div *ngIf="comment.tags.length > 0">
             <p><strong>Tags:</strong></p>
             <ul>
               <li *ngFor="let tag of comment.tags">
-                <span><strong>{{ getTagType(tag[3]) }}:</strong> {{ tag[1] }}</span>
+                <span
+                  ><strong>{{ getTagType(tag[3]) }}:</strong> {{ tag[1] }}</span
+                >
               </li>
             </ul>
           </div>

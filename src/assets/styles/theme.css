@@ -66,6 +66,7 @@
     --text-on-light: oklch(0.25 0.02 var(--primary-hue));
     --pagenav-curr-text: oklch(0.25 0.02 var(--primary-hue));
     --input-field: oklch(0.2 0.02 var(--primary-hue));
+    --input-field-hover: oklch(0.3 0.03 var(--primary-hue));
     --primary-btn-text: oklch(0.25 0.02 var(--primary-hue));
     --enter-btn-bg: oklch(0.2 0.02 var(--primary-hue));
     --enter-btn-hover: oklch(0.3 0.03 var(--primary-hue));
