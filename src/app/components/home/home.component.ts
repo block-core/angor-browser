@@ -23,14 +23,21 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     const pubkey = this.nostrService.getUserPublicKey();
     if (pubkey) {
-      this.nostrService.subscribeToMyEvents(pubkey);
+      this.nostrService.subscribeToEvents(pubkey);
       this.nostrService.getEventStream().subscribe(async (event) => {
-        if (!this.processedEventIds.has(event.id)) {
+        if (event.kind === 1 && !this.processedEventIds.has(event.id)) {
           this.processedEventIds.add(event.id);
           const metadata = await this.nostrService.fetchMetadata(event.pubkey);
           const safeContent = this.sanitizer.bypassSecurityTrustHtml(this.parseContent(event.content));
-          this.eventsWithMetadata.unshift({ event, metadata, safeContent }); // Add new events with metadata at the top
-          this.cdRef.detectChanges(); 
+
+          // Add new event to the array
+          this.eventsWithMetadata.push({ event, metadata, safeContent });
+
+          // Sort events by `created_at` in descending order (newest first)
+          this.eventsWithMetadata.sort((a, b) => b.event.created_at - a.event.created_at);
+
+          // Trigger change detection
+          this.cdRef.detectChanges();
         }
       });
     }

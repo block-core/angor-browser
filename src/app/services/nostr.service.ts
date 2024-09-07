@@ -12,9 +12,10 @@ import { RelayService } from './relay.service';
 import { Filter,kinds } from 'nostr-tools';
 import { nip04 } from 'nostr-tools';
 import { SecurityService } from './security.service';
-import { Observable, Subject } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 import { EncryptedDirectMessage } from 'nostr-tools/kinds';
+import { mergeMap, bufferTime } from 'rxjs/operators';
 
 
 interface CustomMessageEvent {
@@ -465,20 +466,10 @@ export class NostrService {
     }
   }
 
-  subscribeToEvents(callback: (event: NostrEvent) => void): void {
-    this.ensureRelaysConnected().then(() => {
-      const pool = this.relayService.getPool();
-      const connectedRelays = this.relayService.getConnectedRelays();
-      pool.subscribeMany(connectedRelays, [{ kinds: [1] }], {
-        onevent: (event: NostrEvent) => {
-          callback(event);
-          this.eventSubject.next(event); // Emit the event to subscribers
-        },
-      });
-    });
-  }
 
-  subscribeToMyEvents(pubkey: string): void {
+  //events ================================================================
+
+subscribeToEvents(pubkey: string): void {
     this.relayService.ensureConnectedRelays().then(() => {
       const filter: Filter = {
         kinds: [1], // Kind 1 represents text notes
@@ -488,7 +479,22 @@ export class NostrService {
 
       this.relayService.subscribeToFilter(filter);
 
+      // Sort and process events using RxJS operators
+      this.relayService.getEventStream()
+        .pipe(
+          bufferTime(1000), // Collect events over 1 second intervals
+          mergeMap(events => this.processAndSortEvents(events)) // Process and sort events
+        )
+        .subscribe((sortedEvents: NostrEvent[]) => {
+          sortedEvents.forEach(event => this.eventSubject.next(event));
+        });
     });
+  }
+
+  // Generic method to process and sort events by `created_at`
+  private processAndSortEvents(events: NostrEvent[]): Observable<NostrEvent[]> {
+    const sortedEvents = events.sort((a, b) => b.created_at - a.created_at);
+    return of(sortedEvents);
   }
 
 
