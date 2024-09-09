@@ -14,12 +14,6 @@ export class AppComponent implements OnInit {
   isDropdownHidden = true;
   useOverlayScrollbars = true;
   unreadCount: number = 0;
-  useBodyOverlayScrollbars: boolean | null = null;
-  options = {
-    scrollbars: {
-      theme: 'os-theme-dark',
-    },
-  };
 
 
 
@@ -41,7 +35,7 @@ export class AppComponent implements OnInit {
   title = 'angor-browse';
 
   setInitialTheme() {
-    const theme = this.getLocalStorageItem('theme') || 'light';
+    const theme = this.getLocalStorageItem('theme') || 'dark';
     document.documentElement.setAttribute('theme', theme);
   }
 
