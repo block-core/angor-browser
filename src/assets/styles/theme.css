@@ -348,7 +348,7 @@ body {
 }
 #main-grid {
   display: grid;
-  max-width: 1220px;
+  max-width: 1320px;
   min-height: 100vh;
   grid-template-rows: auto 1fr auto;
   margin: auto;
